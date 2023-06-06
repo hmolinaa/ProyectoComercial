@@ -12,4 +12,4 @@ $$\sin(\alpha)^{\theta}=\sum_{i=0}^{n}(x^i + \cos(f))$$
                 
 
 
-###"Las matemáticas son el lenguaje son el idioma que uso Dios para escribir el mundo": Galileo Galilei
+"Las matemáticas son el lenguaje son el idioma que uso Dios para escribir el mundo": Galileo Galilei
