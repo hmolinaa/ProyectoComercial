@@ -1,8 +1,5 @@
-module github.com/culturadevops/GORM
+module sistema
 
-go 1.15
+go 1.20
 
-require (
-	github.com/jinzhu/gorm v1.9.16
-	github.com/spf13/viper v1.7.1
-)
+require github.com/go-sql-driver/mysql v1.7.1 

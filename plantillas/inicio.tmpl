@@ -1,0 +1,58 @@
+{{define "inicio" }}
+{{template "cabecera"}}
+    
+    <h5 class="text-primary"> Vista de calificaciones de cada estudiante </h5> 
+    <br/>
+
+    <table class="table table-hover table-bordered"; overflow-x: auto">
+        <thead>
+            <tr  class="table-warning">
+                <th>Id</th>
+                <th>Nombre</th>
+                <th>Cuenta</th>
+                <th>Asignatura</th>
+                <th>Parcial-1</th>
+                <th>Parcial-2</th>
+                <th>Parcial-3</th>
+                <th>Nota Final</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+            </tr class="bg-primary text-white">
+        </thead>
+        <tbody>
+    {{range.}}
+            <tr>
+                <td >{{.Id}}</td>
+                <td> {{.Nombre}}</td>
+                <td >{{.Cuenta}}</td>
+                <td > {{.Asignatura}}</td>
+                <td > {{.Parcial_1}}</td>
+                <td > {{.Parcial_2}}</td>
+                <td > {{.Parcial_3}} </td>
+                <td > {{.NotaFinal}}</td>
+                <td> {{.Correo}}</td>
+                <td>
+                <a name="" id="" class="btn btn-warning" href="/editar?id={{.Id}}" role="button">Editar</a> |
+                <a name="" id="" class="btn btn-danger" href="/eliminar?id={{.Id}}" role="button">Eliminar</a>
+                
+                 </td>
+            </tr>
+      {{end}}
+        </tbody>
+    </table>
+    <br/>
+    <button type="submit" class="btn btn-success">Enviar calificaciones a cada estudiante</button> 
+    <a name="" id="" class="btn btn-primary" href="/crear" role="button">Agregar nuevo estudiante</a>
+
+    </div>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+
+ 
+</body>
+{{template "pie"}}  
+{{end}}
+

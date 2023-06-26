@@ -1,38 +1,16 @@
-a:link,
-a:visited {
-    background-color: rgb(219, 73, 14);
-    color: blanchedalmond;
-    border: 2px solid white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-}
+html{
+    height: 100%;
 
-a:hover,
-a:active {
-    background-color: rgb(11, 10, 92);
-    color: blanchedalmond;
-}
-
-
-/* Definimos el color inicial */
-.cambioColor {
-    color: rgb(219, 73, 14);
-}
-
-/* Definimos el color al pasar el mouse por encima */
-.cambioColor:hover {
-    color: rgb(16, 7, 94);
 }
 
 body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
     background-color: black;
 }
 
-.footer {
-    background-color: rgb(219, 73, 14);
-    text-align: center;
-    color: blanchedalmond;
-
-  }
+footer{
+    margin-top: auto;
+}
+  
