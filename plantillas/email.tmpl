@@ -1,0 +1,36 @@
+{{define "email"}}
+{{template "cabecera"}}
+
+
+        {{range.}}
+        <div method = "post" action="/actualizar">
+        
+             <input type="hidden" value={{.Id}} class="form-control" name="id" id="id" placeholder="">
+             </br>
+             </br>
+
+             <h5>Estimado {{.Nombre}} :</h5>
+             </br>
+             
+             <p>Debido a que el cuadro de calificaciones del Campus Virtual para Programacion Comercial con codigo {{.Asignatura}} no permite mostrar la suma correcta de su nota final,
+              estoy enviando este email para que pueda tener una idea de su nota final.</p>
+
+             </br></br>
+             <p class="text-primary">Su nota del primer parcial es de: {{.Parcial_1}}</p>
+             </br>
+             <p class="text-primary">Su nota del segundo parcial es de: {{.Parcial_2}}</p>
+             </br>
+             <p class="text-primary">Su nota del tercer parcial es de: {{.Parcial_3}}</p>
+             </br></br>
+
+
+             <p  class="text-primary">Su nota final es de: {{.NotaFinal}}</p>
+             </br>
+             <p>Atentamente, </p>
+             </br>
+
+        </div>
+        {{end}}
+
+{{template "pie"}}
+{{end}}

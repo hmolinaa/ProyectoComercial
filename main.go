@@ -36,6 +36,7 @@ func main() {
 	http.HandleFunc("/eliminar", Eliminar)
 	http.HandleFunc("/editar", Editar)
 	http.HandleFunc("/actualizar", Actualizar)
+	http.HandleFunc("/email", Email)
 
 	fmt.Println("Hola, este servidor esta corriendo...")
 
@@ -140,6 +141,44 @@ func Editar(w http.ResponseWriter, r *http.Request) {
 
 	//fmt.Println(estudiante)
 	plantillas.ExecuteTemplate(w, "editar", estudiante)
+
+}
+
+func Email(w http.ResponseWriter, r *http.Request) {
+
+	conexionEstablecida := conexionBD()
+	registros, err := conexionEstablecida.Query("SELECT * FROM estudiantes")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	estudiante := Estudiante{}
+	AEstudiante := []Estudiante{}
+
+	for registros.Next() {
+		var id, cuenta, parcial1, parcial2, parcial3, notafinal int
+		var nombre, asignatura, correo string
+		err = registros.Scan(&id, &nombre, &cuenta, &asignatura, &parcial1, &parcial2, &parcial3, &notafinal, &correo)
+		if err != nil {
+			panic(err.Error())
+		}
+		estudiante.Id = id
+		estudiante.Nombre = nombre
+		estudiante.Cuenta = cuenta
+		estudiante.Asignatura = asignatura
+		estudiante.Parcial_1 = parcial1
+		estudiante.Parcial_2 = parcial2
+		estudiante.Parcial_3 = parcial3
+		estudiante.NotaFinal = notafinal
+		estudiante.Correo = correo
+
+		AEstudiante = append(AEstudiante, estudiante)
+
+	}
+	//fmt.Println(AEstudiante)
+
+	plantillas.ExecuteTemplate(w, "email", AEstudiante)
 
 }
 
