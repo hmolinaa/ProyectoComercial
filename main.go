@@ -1,13 +1,12 @@
 package main
 
 import (
-	//"fmt"
 	"database/sql"
 	"fmt"
 
 	//"log"
 	"net/http"
-	"text/template"
+	//"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -26,7 +25,7 @@ func conexionBD() (conexion *sql.DB) {
 
 }
 
-var plantillas = template.Must(template.ParseGlob("plantillas/*"))
+//var plantillas = template.Must(template.ParseGlob("plantillas/*"))
 
 func main() {
 	http.HandleFunc("/", Principal)
@@ -45,7 +44,7 @@ func main() {
 }
 
 func Principal(w http.ResponseWriter, r *http.Request) {
-	plantillas.ExecuteTemplate(w, "principal", nil)
+	//plantillas.ExecuteTemplate(w, "principal", nil)
 
 }
 
@@ -107,9 +106,9 @@ func Inicio(w http.ResponseWriter, r *http.Request) {
 		arregloEstudiante = append(arregloEstudiante, estudiante)
 
 	}
-	//fmt.Println(arregloEstudiante)
+	fmt.Println(arregloEstudiante)
 
-	plantillas.ExecuteTemplate(w, "inicio", arregloEstudiante)
+	//plantillas.ExecuteTemplate(w, "inicio", arregloEstudiante)
 }
 
 func Editar(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +139,6 @@ func Editar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//fmt.Println(estudiante)
-	plantillas.ExecuteTemplate(w, "editar", estudiante)
 
 }
 
@@ -178,12 +176,10 @@ func Email(w http.ResponseWriter, r *http.Request) {
 	}
 	//fmt.Println(AEstudiante)
 
-	plantillas.ExecuteTemplate(w, "email", AEstudiante)
-
 }
 
 func Crear(w http.ResponseWriter, r *http.Request) {
-	plantillas.ExecuteTemplate(w, "crear", nil)
+	//plantillas.ExecuteTemplate(w, "crear", nil)
 }
 
 func Insertar(w http.ResponseWriter, r *http.Request) {
