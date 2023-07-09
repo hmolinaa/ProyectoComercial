@@ -11,218 +11,212 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func conexionBD() (conexion *sql.DB) {
+func conectionBD() (conection *sql.DB) {
 	Driver := "mysql"
-	Usuario := "root"
-	Contrasenia := ""
-	Nombre := "unah"
+	User := "root"
+	Password := ""
+	Name := "unah"
 
-	conexion, err := sql.Open(Driver, Usuario+":"+Contrasenia+"@tcp(127.0.0.1)/"+Nombre)
+	conection, err := sql.Open(Driver, User+":"+Password+"@tcp(127.0.0.1)/"+Name)
 	if err != nil {
 		panic(err.Error())
 	}
-	return conexion
+	return conection
 
 }
 
 //var plantillas = template.Must(template.ParseGlob("plantillas/*"))
 
 func main() {
-	http.HandleFunc("/", Principal)
-	http.HandleFunc("/inicio", Inicio)
-	http.HandleFunc("/crear", Crear)
-	http.HandleFunc("/insertar", Insertar)
-	http.HandleFunc("/eliminar", Eliminar)
-	http.HandleFunc("/editar", Editar)
-	http.HandleFunc("/actualizar", Actualizar)
-	http.HandleFunc("/email", Email)
+	http.HandleFunc("/", Home_website)
+	http.HandleFunc("/inicio", Home)
+	http.HandleFunc("/crear", Create_Student)
+	http.HandleFunc("/eliminar", Delete_student)
 
-	fmt.Println("Hola, este servidor esta corriendo...")
+	fmt.Println("Hi, server running...")
 
 	http.ListenAndServe(":8080", nil)
 
 }
 
-func Principal(w http.ResponseWriter, r *http.Request) {
-	//plantillas.ExecuteTemplate(w, "principal", nil)
+func Home_website(w http.ResponseWriter, r *http.Request) {
+	//plantillas.ExecuteTemplate(w, "Home_website", nil)
 
 }
 
-func Eliminar(w http.ResponseWriter, r *http.Request) {
-	idEstudiante := r.URL.Query().Get("id")
-	//fmt.Println(idEstudiante)
+func Delete_student(w http.ResponseWriter, r *http.Request) {
+	id_student := r.URL.Query().Get("id")
+	//fmt.Println(id_student)
 
-	conexionEstablecida := conexionBD()
-	eliminarRegistro, err := conexionEstablecida.Prepare("DELETE FROM estudiantes WHERE id=?")
+	established_connection := conectionBD()
+	delete_records, err := established_connection.Prepare("DELETE FROM students WHERE id=?")
 	if err != nil {
 		panic(err.Error())
 	}
-	eliminarRegistro.Exec(idEstudiante)
+	delete_records.Exec(id_student)
 	http.Redirect(w, r, "/", 301)
 
 }
 
-type Estudiante struct {
-	Id         int
-	Nombre     string
-	Cuenta     int
-	Asignatura string
-	Parcial_1  int
-	Parcial_2  int
-	Parcial_3  int
-	NotaFinal  int
-	Correo     string
+type Student struct {
+	Id             int
+	Name           string
+	Account        int
+	Subject        string
+	First_partial  int
+	second_partial int
+	Third_partial  int
+	Final_score    int
+	Email          string
 }
 
-func Inicio(w http.ResponseWriter, r *http.Request) {
+func Home(w http.ResponseWriter, r *http.Request) {
 
-	conexionEstablecida := conexionBD()
-	registros, err := conexionEstablecida.Query("SELECT * FROM estudiantes")
+	established_connection := conectionBD()
+	records, err := established_connection.Query("SELECT * FROM students")
 
 	if err != nil {
 		panic(err.Error())
 	}
 
-	estudiante := Estudiante{}
-	arregloEstudiante := []Estudiante{}
+	student := Student{}
+	ArrayStudent := []Student{}
 
-	for registros.Next() {
-		var id, cuenta, parcial1, parcial2, parcial3, notafinal int
-		var nombre, asignatura, correo string
-		err = registros.Scan(&id, &nombre, &cuenta, &asignatura, &parcial1, &parcial2, &parcial3, &notafinal, &correo)
+	for records.Next() {
+		var id, account, first_partial, second_partial, third_partial, final_score int
+		var name, subject, email string
+		err = records.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
 		if err != nil {
 			panic(err.Error())
 		}
-		estudiante.Id = id
-		estudiante.Nombre = nombre
-		estudiante.Cuenta = cuenta
-		estudiante.Asignatura = asignatura
-		estudiante.Parcial_1 = parcial1
-		estudiante.Parcial_2 = parcial2
-		estudiante.Parcial_3 = parcial3
-		estudiante.NotaFinal = notafinal
-		estudiante.Correo = correo
+		student.Id = id
+		student.Name = name
+		student.Account = account
+		student.Subject = subject
+		student.First_partial = first_partial
+		student.second_partial = second_partial
+		student.Third_partial = third_partial
+		student.Final_score = final_score
+		student.Email = email
 
-		arregloEstudiante = append(arregloEstudiante, estudiante)
+		ArrayStudent = append(ArrayStudent, student)
 
 	}
-	fmt.Println(arregloEstudiante)
+	fmt.Println(ArrayStudent)
 
-	//plantillas.ExecuteTemplate(w, "inicio", arregloEstudiante)
+	//plantillas.ExecuteTemplate(w, "Home", ArrayStudent)
 }
 
-func Editar(w http.ResponseWriter, r *http.Request) {
-	idEstudiante := r.URL.Query().Get("id")
-	//fmt.Println(idEstudiante)
+func Edit_Student(w http.ResponseWriter, r *http.Request) {
+	idstudent := r.URL.Query().Get("id")
+	//fmt.Println(idstudent)
 
-	conexionEstablecida := conexionBD()
-	registro, err := conexionEstablecida.Query("SELECT * FROM estudiantes WHERE id=?", idEstudiante)
+	established_connection := conectionBD()
+	record, err := established_connection.Query("SELECT * FROM estudiantes WHERE id=?", idstudent)
 
-	estudiante := Estudiante{}
-	for registro.Next() {
-		var id, cuenta, parcial1, parcial2, parcial3, notafinal int
-		var nombre, asignatura, correo string
-		err = registro.Scan(&id, &nombre, &cuenta, &asignatura, &parcial1, &parcial2, &parcial3, &notafinal, &correo)
+	student := Student{}
+	for record.Next() {
+		var id, account, first_partial, second_partial, third_partial, final_score int
+		var name, subject, email string
+		err = record.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
 		if err != nil {
 			panic(err.Error())
 		}
-		estudiante.Id = id
-		estudiante.Nombre = nombre
-		estudiante.Cuenta = cuenta
-		estudiante.Asignatura = asignatura
-		estudiante.Parcial_1 = parcial1
-		estudiante.Parcial_2 = parcial2
-		estudiante.Parcial_3 = parcial3
-		estudiante.NotaFinal = notafinal
-		estudiante.Correo = correo
+		student.Id = id
+		student.Name = name
+		student.Account = account
+		student.Subject = subject
+		student.First_partial = first_partial
+		student.second_partial = second_partial
+		student.Third_partial = third_partial
+		student.Final_score = final_score
+		student.Email = email
 
 	}
 
-	//fmt.Println(estudiante)
+	//fmt.Println(student)
 
 }
 
-func Email(w http.ResponseWriter, r *http.Request) {
+func Email_Student(w http.ResponseWriter, r *http.Request) {
 
-	conexionEstablecida := conexionBD()
-	registros, err := conexionEstablecida.Query("SELECT * FROM estudiantes")
+	established_connection := conectionBD()
+	records, err := established_connection.Query("SELECT * FROM estudiantes")
 
 	if err != nil {
 		panic(err.Error())
 	}
 
-	estudiante := Estudiante{}
-	AEstudiante := []Estudiante{}
+	student := Student{}
+	Array_Student := []Student{}
 
-	for registros.Next() {
-		var id, cuenta, parcial1, parcial2, parcial3, notafinal int
-		var nombre, asignatura, correo string
-		err = registros.Scan(&id, &nombre, &cuenta, &asignatura, &parcial1, &parcial2, &parcial3, &notafinal, &correo)
+	for records.Next() {
+		var id, account, first_partial, second_partial, third_partial, final_score int
+		var name, subject, email string
+		err = records.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
 		if err != nil {
 			panic(err.Error())
 		}
-		estudiante.Id = id
-		estudiante.Nombre = nombre
-		estudiante.Cuenta = cuenta
-		estudiante.Asignatura = asignatura
-		estudiante.Parcial_1 = parcial1
-		estudiante.Parcial_2 = parcial2
-		estudiante.Parcial_3 = parcial3
-		estudiante.NotaFinal = notafinal
-		estudiante.Correo = correo
+		student.Id = id
+		student.Name = name
+		student.Account = account
+		student.Subject = subject
+		student.First_partial = first_partial
+		student.second_partial = second_partial
+		student.Third_partial = third_partial
+		student.Final_score = final_score
+		student.Email = email
 
-		AEstudiante = append(AEstudiante, estudiante)
+		Array_Student = append(Array_Student, student)
 
 	}
-	//fmt.Println(AEstudiante)
 
 }
 
-func Crear(w http.ResponseWriter, r *http.Request) {
-	//plantillas.ExecuteTemplate(w, "crear", nil)
+func Create_Student(w http.ResponseWriter, r *http.Request) {
+
 }
 
-func Insertar(w http.ResponseWriter, r *http.Request) {
+func Insert_Student(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		nombre := r.FormValue("nombre")
-		cuenta := r.FormValue("cuenta")
-		asignatura := r.FormValue("asignatura")
-		parcial := r.FormValue("parcial1")
-		parcial2 := r.FormValue("parcial2")
-		parcial3 := r.FormValue("parcial3")
-		notafinal := r.FormValue("notafinal")
-		correo := r.FormValue("correo")
+		name := r.FormValue("name")
+		account := r.FormValue("account")
+		subject := r.FormValue("subject")
+		first_partial := r.FormValue("first_partial")
+		second_partial := r.FormValue("second_partial")
+		third_partial := r.FormValue("third_partial")
+		final_score := r.FormValue("final_score")
+		email := r.FormValue("email")
 
-		conexionEstablecida := conexionBD()
-		insertarRegistros, err := conexionEstablecida.Prepare("INSERT INTO estudiantes( nombre, cuenta, asignatura, parcial, parcial2, parcial3, notafinal, correo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+		established_connection := conectionBD()
+		insert_record, err := established_connection.Prepare("INSERT INTO estudiantes( name, account, subject, first_partial, second_partial, third_partial, final_score, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
 		if err != nil {
 			panic(err.Error())
 		}
-		insertarRegistros.Exec(nombre, cuenta, asignatura, parcial, parcial2, parcial3, notafinal, correo)
+		insert_record.Exec(name, account, subject, first_partial, second_partial, third_partial, final_score, email)
 		http.Redirect(w, r, "/", 301)
 
 	}
 
 }
 
-func Actualizar(w http.ResponseWriter, r *http.Request) {
+func Update_Student(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		id := r.FormValue("id")
-		nombre := r.FormValue("nombre")
-		cuenta := r.FormValue("cuenta")
-		asignatura := r.FormValue("asignatura")
-		parcial := r.FormValue("parcial1")
-		parcial2 := r.FormValue("parcial2")
-		parcial3 := r.FormValue("parcial3")
-		notafinal := r.FormValue("notafinal")
-		correo := r.FormValue("correo")
+		name := r.FormValue("name")
+		account := r.FormValue("account")
+		subject := r.FormValue("subject")
+		first_partial := r.FormValue("first_partial")
+		second_partial := r.FormValue("second_partial")
+		third_partial := r.FormValue("third_partial")
+		final_score := r.FormValue("final_score")
+		email := r.FormValue("email")
 
-		conexionEstablecida := conexionBD()
-		modificarRegistros, err := conexionEstablecida.Prepare("UPDATE estudiantes SET  nombre = ?, cuenta = ?, asignatura = ?, parcial=?,parcial2=?,parcial3=?,notafinal=?,correo=? WHERE id=? ")
+		established_connection := conectionBD()
+		modify_record, err := established_connection.Prepare("UPDATE students SET  name = ?, account, subject = ?, first_partial = ?, second_partial = ?, third_partial = ?, final_score = ?, email = ? WHERE id=? ")
 		if err != nil {
 			panic(err.Error())
 		}
-		modificarRegistros.Exec(nombre, cuenta, asignatura, parcial, parcial2, parcial3, notafinal, correo, id)
+		modify_record.Exec(name, account, subject, first_partial, second_partial, third_partial, final_score, email)
 		http.Redirect(w, r, "/", 301)
 
 	}
