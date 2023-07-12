@@ -78,11 +78,123 @@
 
     </div>
     <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+ 
+  <button id="btn3"> Buscar Pokemon </button>
+  <br>
+  <br>
+  <p id="name"> </p>
+  <p id="height"> </p>
+  <p id="weight"> </p>
+  <p id="num"> </p>
+  <p id="moves"> </p>
+  <div>
+    <ol id="movesList">
+    </ol>
+  </div>
+  <br>
+  <br>
+  <button id="btn4"> Consultar backend </button>
+  <p id="p1"> </p>
+  <br>
+  <br>
+  <script>
+    let persona = {
+      name: "Jose",
+      surname: "Pineda",
+      age: 28,
+      gender: "male",
+      id: "0801199518342",
+      fullname: function () {
+        return this.name + " " + this.surname;
+      }
+    };
+    console.log(persona.fullname());
 
+    let nombres = ["Luis Mendoza", "Pedro Avila", "Ana Suazo", "Paola Gonzalez"];
+
+    let list = document.getElementById("myList");
+
+    function updatePokemonMoveList(listID,movesArray){
+      while (listID.firstChild) {
+        listID.removeChild(listID.firstChild);
+      }
+      movesArray.forEach((item) => {
+        let li = document.createElement("li");
+        li.innerText = item.move.name;
+        listID.appendChild(li);
+      });
+    }
+
+    function updateList(listID,liArray) {
+
+      while (listID.firstChild) {
+        listID.removeChild(listID.firstChild);
+      }
+
+      liArray.forEach((item) => {
+        let li = document.createElement("li");
+        li.innerText = item;
+        listID.appendChild(li);
+      });
+    }
+
+   // document.getElementById("btn2").addEventListener("click", ()=>updateList(list,nombres));
+
+
+    function pokemonAPI() {
+      let pokName = document.getElementById("fname").value;
+      let url = 'https://pokeapi.co/api/v2/pokemon/';
+
+      fetch(url+pokName) // Replace with your URL
+        .then(function (response) {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('Network response was not ok.');
+        })
+        .then(function (data) {
+          // Process the response data here
+          console.log(data);
+          console.log(data.abilities);
+
+          document.getElementById("name").innerHTML = "Nombre: " + data.name;
+          document.getElementById("height").innerHTML = "Altura: " + data.height;
+          document.getElementById("weight").innerHTML = "Peso: " + data.weight;
+          document.getElementById("num").innerHTML = "Id: " + data.id;
+          document.getElementById("moves").innerHTML = "Movimientos: ";
+          let list1 = document.getElementById("movesList");
+          updatePokemonMoveList(list1,data.moves);
+        })
+        .catch(function (error) {
+          console.log('Error:', error.message);
+        });
+    }
+    document.getElementById("btn3").addEventListener("click", pokemonAPI);
+
+    function fetchBackend()
+    {
+      let url = 'http://localhost:8080/hello';
+
+      fetch(url) // Replace with your URL
+        .then(function (response) {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('Network response was not ok.');
+        })
+        .then(function (data) {
+          // Process the response data here
+          console.log(data);
+          document.getElementById("p1").innerHTML = "Nombre: " + data.nombre;
+        })
+        .catch(function (error) {
+          console.log('Error:', error.message);
+        });
+    }
+    document.getElementById("btn4").addEventListener("click", fetchBackend);
+
+  </script>
+  
  
 </body>
 

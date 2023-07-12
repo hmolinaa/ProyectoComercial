@@ -3,12 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
-	//"log"
 	"net/http"
-	//"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/rs/cors"
 )
 
 func conectionBD() (conection *sql.DB) {
@@ -28,14 +26,16 @@ func conectionBD() (conection *sql.DB) {
 //var plantillas = template.Must(template.ParseGlob("plantillas/*"))
 
 func main() {
-	http.HandleFunc("/", Home_website)
-	http.HandleFunc("/inicio", Home)
-	http.HandleFunc("/crear", Create_Student)
-	http.HandleFunc("/eliminar", Delete_student)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hello", Home)
+	mux.HandleFunc("/inicio", Home)
+	//mux.HandleFunc("/headers", headers)
 
-	fmt.Println("Hi, server running...")
-
-	http.ListenAndServe(":8080", nil)
+	// cors.Default() setup the middleware with default options being
+	// all origins accepted with simple methods (GET, POST). See
+	// documentation below for more options.
+	handler := cors.Default().Handler(mux)
+	http.ListenAndServe(":8080", handler)
 
 }
 
@@ -102,9 +102,14 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		ArrayStudent = append(ArrayStudent, student)
 
 	}
-	fmt.Println(ArrayStudent)
+	fmt.Fprintf(w, "ArrayStudent")
 
 	//plantillas.ExecuteTemplate(w, "Home", ArrayStudent)
+}
+
+func hello(w http.ResponseWriter, req *http.Request) {
+
+	fmt.Fprintf(w, `{"nombre":"Juan Pineda","edad":18,"estado civel":"soltero"}`)
 }
 
 func Edit_Student(w http.ResponseWriter, r *http.Request) {
