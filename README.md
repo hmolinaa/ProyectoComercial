@@ -5,13 +5,14 @@
 
 - En este caso, pues las calificaciones se tienen en una base de datos (mysql), para extraer dichas calificaciones desde el frontend usaremos como Backend Goland y este a la vez pedira los registros a mysql
 
-####Debemos tener en cuenta lo siguiente:
+#### Debemos tener en cuenta lo siguiente:
+
 1. Crear una lista de correos
 2. Componer el correo electrónico
 3. Personalizar el mensaje
 4. Enviar el correo electrónico
 
-![](https://presencia.unah.edu.hn/assets/Uploads/UNAH-Alma.jpg)
+![](https://wallpaperaccess.com/full/1262277.jpg)
 
 > UNAH CU
 
