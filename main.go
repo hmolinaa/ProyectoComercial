@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -27,9 +28,11 @@ func conectionBD() (conection *sql.DB) {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/hello", Home)
+	//mux.HandleFunc("/hello", hello)
 	mux.HandleFunc("/inicio", Home)
 	//mux.HandleFunc("/headers", headers)
+
+	fmt.Println("Servidor en ejecución en http://localhost:8080")
 
 	// cors.Default() setup the middleware with default options being
 	// all origins accepted with simple methods (GET, POST). See
@@ -64,13 +67,13 @@ type Student struct {
 	Account        int
 	Subject        string
 	First_partial  int
-	second_partial int
+	Second_partial int
 	Third_partial  int
 	Final_score    int
 	Email          string
 }
 
-func Home(w http.ResponseWriter, r *http.Request) {
+func Home(w http.ResponseWriter, req *http.Request) {
 
 	established_connection := conectionBD()
 	records, err := established_connection.Query("SELECT * FROM students")
@@ -94,7 +97,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		student.Account = account
 		student.Subject = subject
 		student.First_partial = first_partial
-		student.second_partial = second_partial
+		student.Second_partial = second_partial
 		student.Third_partial = third_partial
 		student.Final_score = final_score
 		student.Email = email
@@ -102,14 +105,12 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		ArrayStudent = append(ArrayStudent, student)
 
 	}
-	fmt.Fprintf(w, "ArrayStudent")
+	// Convert the array to JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ArrayStudent)
 
-	//plantillas.ExecuteTemplate(w, "Home", ArrayStudent)
-}
+	//fmt.Println(ArrayStudent)
 
-func hello(w http.ResponseWriter, req *http.Request) {
-
-	fmt.Fprintf(w, `{"nombre":"Juan Pineda","edad":18,"estado civel":"soltero"}`)
 }
 
 func Edit_Student(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +133,7 @@ func Edit_Student(w http.ResponseWriter, r *http.Request) {
 		student.Account = account
 		student.Subject = subject
 		student.First_partial = first_partial
-		student.second_partial = second_partial
+		student.Second_partial = second_partial
 		student.Third_partial = third_partial
 		student.Final_score = final_score
 		student.Email = email
@@ -167,7 +168,7 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 		student.Account = account
 		student.Subject = subject
 		student.First_partial = first_partial
-		student.second_partial = second_partial
+		student.Second_partial = second_partial
 		student.Third_partial = third_partial
 		student.Final_score = final_score
 		student.Email = email

@@ -1,7 +1,15 @@
-### Enviar calificaciones a Estudiantes
+# Sobre lo que trata mi proyecto
 
-- Un profesor tiene una cuadro de calificaciones finales de sus estudiantes. El profesor desea enviar un mensaje de correo electronico personalizado a cada estudiante donde se detalle las calificaciones parciales y las calificaciones finales. 
+- Un profesor tiene una cuadro de calificaciones finales de sus estudiantes y desea enviar un mensaje de correo electronico personalizado a cada estudiante donde se detalle las calificaciones parciales y las calificaciones finales desde una pagina web.
 
+-En este caso, pues las calificaciones se tienen en una base de datos (mysql), para extraer dichas calificaciones desde el frontend usaremos como Backend Goland y este a la vez pedira los registros a mysql
+
+
+####Debemos tener en cuenta lo siguiente:
+1. Crear una lista de correos
+2. Componer el correo electrónico
+3. Personalizar el mensaje
+4. Enviar el correo electrónico
 
 ![](https://presencia.unah.edu.hn/assets/Uploads/UNAH-Alma.jpg)
 
