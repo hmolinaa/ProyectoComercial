@@ -123,7 +123,7 @@ func Home(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func sendEmail(name, email, subject, body string) error {
+func sendEmail(email, subject, body string) error {
 	// Configurar el cliente de envío de correos electrónicos
 	dialer := gomail.NewDialer("smtp.gmail.com", 587, "henrrymolina100@gmail.com", "mfhbgbzqdqpqpbtj")
 
@@ -132,7 +132,7 @@ func sendEmail(name, email, subject, body string) error {
 	message.SetHeader("From", "henrrymolina100@gmail.com")
 	message.SetHeader("To", email)
 	message.SetHeader("Subject", subject)
-	message.SetBody("text/plain", body)
+	message.SetBody("text/html", body)
 
 	// Enviar el correo electrónico
 	err := dialer.DialAndSend(message)
@@ -177,22 +177,23 @@ func Edit_Student(w http.ResponseWriter, r *http.Request) {
 func Email_Student(w http.ResponseWriter, r *http.Request) {
 
 	established_connection := conectionBD()
-	rows, err := established_connection.Query("SELECT name, email, final_score  FROM students")
+	rows, err := established_connection.Query("SELECT * FROM students")
 
 	if err != nil {
 		panic(err.Error())
 	}
 
-	// Recorrer los registros y enviar correos electrónicos personalizados
 	for rows.Next() {
 		var student Student
-		err := rows.Scan(&student.Name, &student.Email, &student.Final_score)
+		err := rows.Scan(&student.Id, &student.Name, &student.Account, &student.Subject, &student.First_partial, &student.Second_partial, &student.Third_partial, &student.Final_score, &student.Email)
 		if err != nil {
 			log.Printf("Error al escanear el registro: %v", err)
 			continue
 		}
 
-		err = sendEmail(student.Name, student.Email, "Calificaciones de la clase MM-520", "Correo enviado desde Go")
+		htmlContent := generateEmailContent(student)
+
+		err = sendEmail(student.Email, "Calificaciones de la clase MM-520", htmlContent)
 		if err != nil {
 			log.Printf("Error al enviar el correo a %s (%s): %v", student.Name, student.Email, err)
 		} else {
@@ -202,6 +203,30 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Proceso de envío de correos completado")
 
+}
+
+func generateEmailContent(student Student) string {
+	// Construir el contenido HTML personalizado del correo electrónico
+	htmlContent := `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Correo Electrónico Personalizado</title>
+	</head>
+	<body>
+		<h1>Hola, ` + student.Name + `</h1>
+		<p>A continuación se muestran sus datos:</p>
+		<p>Nombre: ` + student.Name + `</p>
+		<p>Correo Electrónico: ` + student.Email + `</p>
+		<p>Asignatura: ` + student.Subject + `</p>
+		<p>Nota Final: ` + student.Name + `</p>
+		
+		<p>¡Gracias!</p>
+	</body>
+	</html>
+	`
+
+	return htmlContent
 }
 
 func Create_Student(w http.ResponseWriter, r *http.Request) {
