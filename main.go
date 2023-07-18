@@ -4,7 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+
+	//"net/smtp"
+
+	"github.com/go-gomail/gomail"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/rs/cors"
@@ -28,8 +33,8 @@ func conectionBD() (conection *sql.DB) {
 
 func main() {
 	mux := http.NewServeMux()
-	//mux.HandleFunc("/hello", hello)
 	mux.HandleFunc("/inicio", Home)
+	mux.HandleFunc("/send-emails", Email_Student)
 	//mux.HandleFunc("/headers", headers)
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -73,6 +78,11 @@ type Student struct {
 	Email          string
 }
 
+type EmailContent struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
 func Home(w http.ResponseWriter, req *http.Request) {
 
 	established_connection := conectionBD()
@@ -113,6 +123,26 @@ func Home(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func sendEmail(name, email, subject, body string) error {
+	// Configurar el cliente de envío de correos electrónicos
+	dialer := gomail.NewDialer("smtp.gmail.com", 587, "henrrymolina100@gmail.com", "mfhbgbzqdqpqpbtj")
+
+	// Crear el mensaje de correo personalizado
+	message := gomail.NewMessage()
+	message.SetHeader("From", "henrrymolina100@gmail.com")
+	message.SetHeader("To", email)
+	message.SetHeader("Subject", subject)
+	message.SetBody("text/plain", body)
+
+	// Enviar el correo electrónico
+	err := dialer.DialAndSend(message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Edit_Student(w http.ResponseWriter, r *http.Request) {
 	idstudent := r.URL.Query().Get("id")
 	//fmt.Println(idstudent)
@@ -147,35 +177,30 @@ func Edit_Student(w http.ResponseWriter, r *http.Request) {
 func Email_Student(w http.ResponseWriter, r *http.Request) {
 
 	established_connection := conectionBD()
-	records, err := established_connection.Query("SELECT * FROM estudiantes")
+	rows, err := established_connection.Query("SELECT name, email, final_score  FROM students")
 
 	if err != nil {
 		panic(err.Error())
 	}
 
-	student := Student{}
-	Array_Student := []Student{}
-
-	for records.Next() {
-		var id, account, first_partial, second_partial, third_partial, final_score int
-		var name, subject, email string
-		err = records.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
+	// Recorrer los registros y enviar correos electrónicos personalizados
+	for rows.Next() {
+		var student Student
+		err := rows.Scan(&student.Name, &student.Email, &student.Final_score)
 		if err != nil {
-			panic(err.Error())
+			log.Printf("Error al escanear el registro: %v", err)
+			continue
 		}
-		student.Id = id
-		student.Name = name
-		student.Account = account
-		student.Subject = subject
-		student.First_partial = first_partial
-		student.Second_partial = second_partial
-		student.Third_partial = third_partial
-		student.Final_score = final_score
-		student.Email = email
 
-		Array_Student = append(Array_Student, student)
-
+		err = sendEmail(student.Name, student.Email, "Calificaciones de la clase MM-520", "Correo enviado desde Go")
+		if err != nil {
+			log.Printf("Error al enviar el correo a %s (%s): %v", student.Name, student.Email, err)
+		} else {
+			log.Printf("Correo enviado a %s (%s)", student.Name, student.Email)
+		}
 	}
+
+	fmt.Println("Proceso de envío de correos completado")
 
 }
 
