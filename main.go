@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	//"net/smtp"
 
@@ -206,7 +207,12 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateEmailContent(student Student) string {
-	// Construir el contenido HTML personalizado del correo electrónico
+
+	P1 := strconv.Itoa(student.First_partial)
+	P2 := strconv.Itoa(student.Second_partial)
+	P3 := strconv.Itoa(student.Third_partial)
+	Final_score := strconv.Itoa(student.Final_score)
+
 	htmlContent := `
 	<!DOCTYPE html>
 	<html>
@@ -219,7 +225,10 @@ func generateEmailContent(student Student) string {
 		<p>Nombre: ` + student.Name + `</p>
 		<p>Correo Electrónico: ` + student.Email + `</p>
 		<p>Asignatura: ` + student.Subject + `</p>
-		<p>Nota Final: ` + student.Name + `</p>
+		<p>Su nota del primer parcial es: ` + P1 + `</p>
+		<p>Su nota del segundo parcial es: ` + P2 + `</p>
+		<p>Su nota del tercer parcial es: ` + P3 + `</p>
+		<p>Su nota final es: ` + Final_score + `</p>
 		
 		<p>¡Gracias!</p>
 	</body>
