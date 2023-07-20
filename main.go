@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	//"net/smtp"
-
 	"github.com/go-gomail/gomail"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -29,8 +27,6 @@ func conectionBD() (conection *sql.DB) {
 	return conection
 
 }
-
-//var plantillas = template.Must(template.ParseGlob("plantillas/*"))
 
 func main() {
 	mux := http.NewServeMux()
@@ -221,7 +217,7 @@ func generateEmailContent(student Student) string {
 	</head>
 	<body>
 		<h1>Hola, ` + student.Name + `</h1>
-		<p>A continuación se muestran sus datos:</p>
+		<p>A continuación se muestran sus datos y calificaciones obtenidas:</p>
 		<p>Nombre: ` + student.Name + `</p>
 		<p>Correo Electrónico: ` + student.Email + `</p>
 		<p>Asignatura: ` + student.Subject + `</p>
@@ -230,7 +226,7 @@ func generateEmailContent(student Student) string {
 		<p>Su nota del tercer parcial es: ` + P3 + `</p>
 		<p>Su nota final es: ` + Final_score + `</p>
 		
-		<p>¡Gracias!</p>
+		<p>Saludos</p>
 	</body>
 	</html>
 	`

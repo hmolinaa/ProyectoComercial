@@ -27,7 +27,7 @@
         <a class="nav-item nav-link active" href="principal.html"> Inicio</a>
       </li>
       <li class="nav-item">
-        <a class="nav-item nav-link " href="inicio.html">Ver calificaciones <span class="sr-only">(current)</span></a>
+        <a class="nav-item nav-link " href="inicio.html">Calificaciones de los estudiantes <span class="sr-only">(current)</span></a>
       </li>
     </ul>
 
@@ -74,8 +74,8 @@
                       <td>${item.Final_score}</td>
                       <td>${item.Email}</td>
                       <td>
-                          <a name="" id="" class="btn btn-warning" href="/editar?id={{.Id}}" role="button">Editar</a> |
-                          <a name="" id="" class="btn btn-danger" href="/eliminar?id=${item.Id}" role="button">Eliminar</a>
+                          <a name="" id="" class="btn btn-warning" href="/editar" role="button">Editar</a> |
+                          <a name="" id="" class="btn btn-danger" href="/eliminar?id={item.Id}" role="button">Eliminar</a>
                 
                       </td>
                   `;
@@ -89,8 +89,8 @@
 
 
     <br />
-    <a name="" id="" class="btn btn-success" href="/email" role="button">Enviar correo</a>
-    <a name="" id="" class="btn btn-primary" href="/crear" role="button">Agregar nuevo estudiante</a>
+    <a name="" id="" class="btn btn-success" href="http://localhost:8080/send-emails" role="button">Enviar correo personalizado a todos</a>
+    <a name="" id="" class="btn btn-primary" href="/crear.html" role="button">Agregar nuevo estudiante</a>
 
   </div>
   <br />
