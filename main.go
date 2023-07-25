@@ -4,14 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+
+	"github.com/rs/cors"
+	"github.com/tealeg/xlsx"
 
 	"github.com/go-gomail/gomail"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/rs/cors"
 )
 
 func conectionBD() (conection *sql.DB) {
@@ -32,6 +36,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/inicio", Home)
 	mux.HandleFunc("/send-emails", Email_Student)
+	//mux.HandleFunc("/subirexcel", handleUpload)
+	//mux.HandleFunc("/subirArchivo", subirArchivo)
 	//mux.HandleFunc("/headers", headers)
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -42,6 +48,69 @@ func main() {
 	handler := cors.Default().Handler(mux)
 	http.ListenAndServe(":8080", handler)
 
+}
+
+func subirArchivo(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Error al obtener el archivo", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Crear un archivo temporal para guardar el archivo subido
+	tempFile, err := os.CreateTemp("", "tempfile.xlsx")
+	if err != nil {
+		http.Error(w, "Error al crear el archivo temporal", http.StatusInternalServerError)
+		return
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	// Copiar el contenido del archivo subido al archivo temporal
+	_, err = io.Copy(tempFile, file)
+	if err != nil {
+		http.Error(w, "Error al guardar el archivo temporal", http.StatusInternalServerError)
+		return
+	}
+
+	// Leer el archivo de Excel
+	xlFile, err := xlsx.OpenFile(tempFile.Name())
+	if err != nil {
+		http.Error(w, "Error al abrir el archivo de Excel", http.StatusInternalServerError)
+		return
+	}
+
+	// Procesar el archivo de Excel y obtener los datos en una tabla
+	var tabla [][]string
+	for _, sheet := range xlFile.Sheets {
+		for _, row := range sheet.Rows {
+			var fila []string
+			for _, cell := range row.Cells {
+				fila = append(fila, cell.String())
+			}
+			tabla = append(tabla, fila)
+		}
+	}
+
+	// Convertir la tabla a formato JSON
+	jsonData, err := json.Marshal(tabla)
+	if err != nil {
+		http.Error(w, "Error al convertir los datos a JSON", http.StatusInternalServerError)
+		return
+	}
+
+	// Impresión para verificar el contenido del JSON
+	fmt.Println(string(jsonData))
+
+	// Responder con el archivo.json
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 }
 
 func Home_website(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +190,7 @@ func Home(w http.ResponseWriter, req *http.Request) {
 }
 
 func sendEmail(email, subject, body string) error {
-	// Configurar el cliente de envío de correos electrónicos
+	// Configurar el envío de correos electrónicos
 	dialer := gomail.NewDialer("smtp.gmail.com", 587, "henrrymolina100@gmail.com", "mfhbgbzqdqpqpbtj")
 
 	// Crear el mensaje de correo personalizado
