@@ -1,0 +1,40 @@
+<!-- frontend.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subir archivo Excel</title>
+</head>
+<body>
+    <input type="file" id="excelFileInput">
+    <button onclick="uploadFile()">Subir</button>
+    <div id="tableContainer"></div>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('excelFileInput');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => displayTable(data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function displayTable(data) {
+            const tableContainer = document.getElementById('tableContainer');
+            let tableHTML = '<table><tr><th>Columna 1</th><th>Columna 2</th></tr>';
+
+            data.forEach(row => {
+                tableHTML += `<tr><td>${row.columna1}</td><td>${row.columna2}</td></tr>`;
+            });
+
+            tableHTML += '</table>';
+            tableContainer.innerHTML = tableHTML;
+        }
+    </script>
+</body>
+</html>

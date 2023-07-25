@@ -37,7 +37,7 @@ func main() {
 	mux.HandleFunc("/inicio", Home)
 	mux.HandleFunc("/send-emails", Email_Student)
 	//mux.HandleFunc("/subirexcel", handleUpload)
-	//mux.HandleFunc("/subirArchivo", subirArchivo)
+
 	//mux.HandleFunc("/headers", headers)
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -50,7 +50,7 @@ func main() {
 
 }
 
-func subirArchivo(w http.ResponseWriter, r *http.Request) {
+func handleUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 		return
@@ -111,11 +111,6 @@ func subirArchivo(w http.ResponseWriter, r *http.Request) {
 	// Responder con el archivo.json
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
-}
-
-func Home_website(w http.ResponseWriter, r *http.Request) {
-	//plantillas.ExecuteTemplate(w, "Home_website", nil)
-
 }
 
 func Delete_student(w http.ResponseWriter, r *http.Request) {
