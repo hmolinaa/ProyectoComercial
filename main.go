@@ -4,14 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/rs/cors"
-	"github.com/tealeg/xlsx"
 
 	"github.com/go-gomail/gomail"
 
@@ -33,84 +31,56 @@ func conectionBD() (conection *sql.DB) {
 }
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/inicio", Home)
-	mux.HandleFunc("/send-emails", Email_Student)
-	//mux.HandleFunc("/subirexcel", handleUpload)
+	r := mux.NewRouter()
+	r.HandleFunc("/excel", procesarJSON).Methods(http.MethodPost)
+	r.HandleFunc("/inicio", Home)
 
-	//mux.HandleFunc("/headers", headers)
+	corsHandler := cors.Default().Handler(r)
 
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
 
-	// cors.Default() setup the middleware with default options being
-	// all origins accepted with simple methods (GET, POST). See
-	// documentation below for more options.
-	handler := cors.Default().Handler(mux)
-	http.ListenAndServe(":8080", handler)
-
+	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 }
 
-func handleUpload(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+func procesarJSON(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Solicitud recibida:", r.Method, r.URL)
+
+	err := r.ParseMultipartForm(1 << 50) // Tamaño máximo de archivo (10 MB)
+	if err != nil {
+		http.Error(w, "Error al leer el archivo: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	file, _, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error al obtener el archivo", http.StatusBadRequest)
+		http.Error(w, "Error al obtener el archivo: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	// Crear un archivo temporal para guardar el archivo subido
-	tempFile, err := os.CreateTemp("", "tempfile.xlsx")
-	if err != nil {
-		http.Error(w, "Error al crear el archivo temporal", http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-	defer tempFile.Close()
+	fmt.Println("Archivo adjunto:", file)
 
-	// Copiar el contenido del archivo subido al archivo temporal
-	_, err = io.Copy(tempFile, file)
-	if err != nil {
-		http.Error(w, "Error al guardar el archivo temporal", http.StatusInternalServerError)
-		return
-	}
-
-	// Leer el archivo de Excel
-	xlFile, err := xlsx.OpenFile(tempFile.Name())
-	if err != nil {
-		http.Error(w, "Error al abrir el archivo de Excel", http.StatusInternalServerError)
-		return
-	}
-
-	// Procesar el archivo de Excel y obtener los datos en una tabla
-	var tabla [][]string
-	for _, sheet := range xlFile.Sheets {
-		for _, row := range sheet.Rows {
-			var fila []string
-			for _, cell := range row.Cells {
-				fila = append(fila, cell.String())
-			}
-			tabla = append(tabla, fila)
+	switch r.Method {
+	case http.MethodPost:
+		// Procesar la solicitud POST
+		var jsonData map[string]interface{}
+		err := json.NewDecoder(r.Body).Decode(&jsonData)
+		if err != nil {
+			http.Error(w, "Error al leer el JSON: "+err.Error(), http.StatusBadRequest)
+			return
 		}
+		defer r.Body.Close()
+
+		fmt.Println("JSON recibido en el backend:", jsonData)
+
+		// Devolver el JSON
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(jsonData)
+
+	default:
+		// Manejar otros métodos no permitidos
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 	}
-
-	// Convertir la tabla a formato JSON
-	jsonData, err := json.Marshal(tabla)
-	if err != nil {
-		http.Error(w, "Error al convertir los datos a JSON", http.StatusInternalServerError)
-		return
-	}
-
-	// Impresión para verificar el contenido del JSON
-	fmt.Println(string(jsonData))
-
-	// Responder con el archivo.json
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
 }
 
 func Delete_student(w http.ResponseWriter, r *http.Request) {
