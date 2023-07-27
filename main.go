@@ -34,6 +34,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/excel", procesarJSON).Methods(http.MethodPost)
 	r.HandleFunc("/inicio", Home)
+	r.HandleFunc("/send-emails", Email_Student)
 
 	corsHandler := cors.Default().Handler(r)
 
@@ -43,44 +44,23 @@ func main() {
 }
 
 func procesarJSON(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Solicitud recibida:", r.Method, r.URL)
-
-	err := r.ParseMultipartForm(1 << 50) // Tamaño máximo de archivo (10 MB)
-	if err != nil {
-		http.Error(w, "Error al leer el archivo: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	file, _, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Error al obtener el archivo: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	fmt.Println("Archivo adjunto:", file)
-
-	switch r.Method {
-	case http.MethodPost:
-		// Procesar la solicitud POST
-		var jsonData map[string]interface{}
-		err := json.NewDecoder(r.Body).Decode(&jsonData)
-		if err != nil {
-			http.Error(w, "Error al leer el JSON: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-
-		fmt.Println("JSON recibido en el backend:", jsonData)
-
-		// Devolver el JSON
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(jsonData)
-
-	default:
-		// Manejar otros métodos no permitidos
+	if r.Method != http.MethodPost {
 		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		return
 	}
+
+	var jsonData []map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&jsonData)
+	if err != nil {
+		http.Error(w, "Error al leer el JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Aquí puedes realizar cualquier procesamiento adicional del JSON si es necesario
+
+	// Enviar el JSON de vuelta al frontend como respuesta
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonData)
 }
 
 func Delete_student(w http.ResponseWriter, r *http.Request) {
