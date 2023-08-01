@@ -1,0 +1,50 @@
+
+    <h1>Enviar Correos a Estudiantes</h1>
+    <form id="emailForm">
+        <label for="customMessage">Mensaje Personalizado:</label><br>
+        <div id="customMessage" style="border: 1px solid #ccc; padding: 10px;" contenteditable="true">
+            Hola {{Nombre}},
+
+            Te informamos que tus calificaciones para la asignatura {{Asignatura}} son las siguientes:
+            - Primer Parcial: {{P1}}
+            - Segundo Parcial: {{P2}}
+            - Tercer Parcial: {{P3}}
+            - Nota Final: {{Final_score}}
+
+            ¡Saludos!
+        </div>
+        <br>
+        <input type="submit" value="Enviar Correos">
+    </form>
+
+    <script>
+        document.getElementById('emailForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const customMessage = document.getElementById('customMessage').innerText;
+            const formData = new FormData();
+            formData.append('customMessage', customMessage);
+            sendEmails(formData);
+        });
+
+        function sendEmails(formData) {
+            fetch('/send_emails', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error sending emails:', error);
+                alert('Error sending emails. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>
