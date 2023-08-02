@@ -2,8 +2,6 @@ async function enviarArchivo() {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
 
-    const table = document.getElementById('items');
-    table.style.display = 'none'; 
 
     if (file) {
         const reader = new FileReader();
@@ -17,7 +15,7 @@ async function enviarArchivo() {
                 // Convertir el JSON a una cadena
                 const jsonString = JSON.stringify(jsonData);
 
-                // Configurar el cuerpo de la solicitud con el contenido del JSON
+
                 const requestOptions = {
                     method: 'POST',
                     headers: {
@@ -32,6 +30,7 @@ async function enviarArchivo() {
                 if (response.ok) {
                     const data = await response.json();
                     mostrarTabla(data);
+                    document.getElementById('items').style.display = 'table';
                 } else {
                     console.log('Error en la solicitud Fetch:', response.status, response.statusText);
                 }
@@ -44,7 +43,8 @@ async function enviarArchivo() {
     } else {
         console.log('Por favor, selecciona un archivo.');
     }
-    
+
+
 }
 
 async function procesarArchivoExcel(fileContent) {
@@ -73,7 +73,6 @@ function mostrarTabla(data) {
         const row = document.createElement('tr');
         row.innerHTML = `
     <td>${item.Nombre}</td>
-    <td>${item.Apellido}</td>
     <td>${item.Cuenta}</td>
     <td>${item['Asignatura']}</td>
     <td>${item['Parcial 1']}</td>
@@ -85,4 +84,3 @@ function mostrarTabla(data) {
         tableBody.appendChild(row);
     });
 }
-

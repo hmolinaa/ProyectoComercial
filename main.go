@@ -8,14 +8,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-gomail/gomail"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
-
-	"github.com/go-gomail/gomail"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
+// Database connection
 func conectionBD() (conection *sql.DB) {
 	Driver := "mysql"
 	User := "root"
@@ -27,7 +26,6 @@ func conectionBD() (conection *sql.DB) {
 		panic(err.Error())
 	}
 	return conection
-
 }
 
 func main() {
@@ -35,48 +33,14 @@ func main() {
 	r.HandleFunc("/excel", procesarJSON).Methods(http.MethodPost)
 	r.HandleFunc("/inicio", Home)
 	r.HandleFunc("/send-emails", Email_Student)
+	r.HandleFunc("/send", Email_Student_E)
 
 	corsHandler := cors.Default().Handler(r)
-
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
-
 	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 }
 
-func procesarJSON(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var jsonData []map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&jsonData)
-	if err != nil {
-		http.Error(w, "Error al leer el JSON: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Aquí puedes realizar cualquier procesamiento adicional del JSON si es necesario
-
-	// Enviar el JSON de vuelta al frontend como respuesta
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(jsonData)
-}
-
-func Delete_student(w http.ResponseWriter, r *http.Request) {
-	id_student := r.URL.Query().Get("id")
-	//fmt.Println(id_student)
-
-	established_connection := conectionBD()
-	delete_records, err := established_connection.Prepare("DELETE FROM students WHERE id=?")
-	if err != nil {
-		panic(err.Error())
-	}
-	delete_records.Exec(id_student)
-	http.Redirect(w, r, "/", 301)
-
-}
-
+// Structure of each student
 type Student struct {
 	Id             int
 	Name           string
@@ -89,13 +53,59 @@ type Student struct {
 	Email          string
 }
 
-type EmailContent struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
+// Process JSON from excel sent from frontend
+func procesarJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var jsonData []map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&jsonData)
+	if err != nil {
+		http.Error(w, "Error reading the JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = save_in_BD(jsonData)
+	if err != nil {
+		http.Error(w, "Failed to save to database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Send a response to the frontend
+	w.WriteHeader(http.StatusOK)
+
+	// Send the JSON back to the frontend
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonData)
+}
+
+func save_in_BD(data []map[string]interface{}) error {
+	// Database connection
+	db := conectionBD()
+	defer db.Close()
+
+	// Clear the table "students_excel"
+	_, err := db.Exec("DELETE FROM students_excel")
+	if err != nil {
+		log.Println("Error cleaning table students_excel:", err)
+		return err
+	}
+
+	// Insert the data in the table "students_excel"
+	for _, item := range data {
+		_, err := db.Exec("INSERT INTO students_excel (name, account, subject, first_partial, second_partial, third_partial, final_score, email) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)",
+			item["Nombre"], item["Cuenta"], item["Asignatura"], item["Parcial 1"], item["Parcial 2"], item["Parcial 3"], item["Nota Final"], item["Correo"])
+		if err != nil {
+			log.Println("Error inserting into database:", err)
+		}
+	}
+	return nil
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-
+	// Database connection
 	established_connection := conectionBD()
 	records, err := established_connection.Query("SELECT * FROM students")
 
@@ -129,23 +139,20 @@ func Home(w http.ResponseWriter, req *http.Request) {
 	// Convert the array to JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ArrayStudent)
-
-	//fmt.Println(ArrayStudent)
-
 }
 
 func sendEmail(email, subject, body string) error {
-	// Configurar el envío de correos electrónicos
+	// Configure sending emails
 	dialer := gomail.NewDialer("smtp.gmail.com", 587, "henrrymolina100@gmail.com", "mfhbgbzqdqpqpbtj")
 
-	// Crear el mensaje de correo personalizado
+	// Create the custom email
 	message := gomail.NewMessage()
 	message.SetHeader("From", "henrrymolina100@gmail.com")
 	message.SetHeader("To", email)
 	message.SetHeader("Subject", subject)
 	message.SetBody("text/html", body)
 
-	// Enviar el correo electrónico
+	// send email
 	err := dialer.DialAndSend(message)
 	if err != nil {
 		return err
@@ -154,41 +161,9 @@ func sendEmail(email, subject, body string) error {
 	return nil
 }
 
-func Edit_Student(w http.ResponseWriter, r *http.Request) {
-	idstudent := r.URL.Query().Get("id")
-	//fmt.Println(idstudent)
-
-	established_connection := conectionBD()
-	record, err := established_connection.Query("SELECT * FROM estudiantes WHERE id=?", idstudent)
-
-	student := Student{}
-	for record.Next() {
-		var id, account, first_partial, second_partial, third_partial, final_score int
-		var name, subject, email string
-		err = record.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
-		if err != nil {
-			panic(err.Error())
-		}
-		student.Id = id
-		student.Name = name
-		student.Account = account
-		student.Subject = subject
-		student.First_partial = first_partial
-		student.Second_partial = second_partial
-		student.Third_partial = third_partial
-		student.Final_score = final_score
-		student.Email = email
-
-	}
-
-	//fmt.Println(student)
-
-}
-
 func Email_Student(w http.ResponseWriter, r *http.Request) {
-
 	established_connection := conectionBD()
-	rows, err := established_connection.Query("SELECT * FROM students")
+	rows, err := established_connection.Query("SELECT * FROM students") // we access the table students
 
 	if err != nil {
 		panic(err.Error())
@@ -198,7 +173,7 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 		var student Student
 		err := rows.Scan(&student.Id, &student.Name, &student.Account, &student.Subject, &student.First_partial, &student.Second_partial, &student.Third_partial, &student.Final_score, &student.Email)
 		if err != nil {
-			log.Printf("Error al escanear el registro: %v", err)
+			log.Printf("Failed to scan registry: %v", err)
 			continue
 		}
 
@@ -206,16 +181,47 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 
 		err = sendEmail(student.Email, "Calificaciones de la clase MM-520", htmlContent)
 		if err != nil {
-			log.Printf("Error al enviar el correo a %s (%s): %v", student.Name, student.Email, err)
+			log.Printf("Error sending mail to %s (%s): %v", student.Name, student.Email, err)
 		} else {
-			log.Printf("Correo enviado a %s (%s)", student.Name, student.Email)
+			log.Printf("send email to %s (%s)", student.Name, student.Email)
 		}
 	}
 
-	fmt.Println("Proceso de envío de correos completado")
+	fmt.Println("Mailing process completed")
+}
+
+// Access the table students_excel
+func Email_Student_E(w http.ResponseWriter, r *http.Request) {
+	established_connection := conectionBD()
+	rows, err := established_connection.Query("SELECT * FROM students_excel") //we access the table students_excel
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for rows.Next() {
+		var student Student
+		err := rows.Scan(&student.Id, &student.Name, &student.Account, &student.Subject, &student.First_partial, &student.Second_partial, &student.Third_partial, &student.Final_score, &student.Email)
+		if err != nil {
+			log.Printf("Failed to scan registry: %v", err)
+			continue
+		}
+
+		htmlContent := generateEmailContent(student)
+
+		err = sendEmail(student.Email, "Calificaciones", htmlContent)
+		if err != nil {
+			log.Printf("Error sending mail to %s (%s): %v", student.Name, student.Email, err)
+		} else {
+			log.Printf("sen email to %s (%s)", student.Name, student.Email)
+		}
+	}
+
+	fmt.Println("Mailing process completed")
 
 }
 
+// Falta cambiar, esto lo debe editar el usuarios desde el frontend
 func generateEmailContent(student Student) string {
 
 	P1 := strconv.Itoa(student.First_partial)
@@ -246,54 +252,4 @@ func generateEmailContent(student Student) string {
 	`
 
 	return htmlContent
-}
-
-func Create_Student(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func Insert_Student(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		name := r.FormValue("name")
-		account := r.FormValue("account")
-		subject := r.FormValue("subject")
-		first_partial := r.FormValue("first_partial")
-		second_partial := r.FormValue("second_partial")
-		third_partial := r.FormValue("third_partial")
-		final_score := r.FormValue("final_score")
-		email := r.FormValue("email")
-
-		established_connection := conectionBD()
-		insert_record, err := established_connection.Prepare("INSERT INTO estudiantes( name, account, subject, first_partial, second_partial, third_partial, final_score, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-		if err != nil {
-			panic(err.Error())
-		}
-		insert_record.Exec(name, account, subject, first_partial, second_partial, third_partial, final_score, email)
-		http.Redirect(w, r, "/", 301)
-
-	}
-
-}
-
-func Update_Student(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		name := r.FormValue("name")
-		account := r.FormValue("account")
-		subject := r.FormValue("subject")
-		first_partial := r.FormValue("first_partial")
-		second_partial := r.FormValue("second_partial")
-		third_partial := r.FormValue("third_partial")
-		final_score := r.FormValue("final_score")
-		email := r.FormValue("email")
-
-		established_connection := conectionBD()
-		modify_record, err := established_connection.Prepare("UPDATE students SET  name = ?, account, subject = ?, first_partial = ?, second_partial = ?, third_partial = ?, final_score = ?, email = ? WHERE id=? ")
-		if err != nil {
-			panic(err.Error())
-		}
-		modify_record.Exec(name, account, subject, first_partial, second_partial, third_partial, final_score, email)
-		http.Redirect(w, r, "/", 301)
-
-	}
-
 }
