@@ -1,3 +1,11 @@
+// Declarar la variable contentDiv
+const contentDiv = document.getElementById('contentDiv');
+
+// Función para mostrar el contenido del div
+function mostrarContenidoDiv() {
+  contentDiv.style.display = 'block';
+}
+
 async function enviarArchivo() {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
@@ -30,7 +38,7 @@ async function enviarArchivo() {
                 if (response.ok) {
                     const data = await response.json();
                     mostrarTabla(data);
-                    document.getElementById('items').style.display = 'table';
+                    mostrarContenidoDiv();
                 } else {
                     console.log('Error en la solicitud Fetch:', response.status, response.statusText);
                 }

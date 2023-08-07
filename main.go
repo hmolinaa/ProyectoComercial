@@ -1,3 +1,4 @@
+// main.go
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-gomail/gomail"
 	_ "github.com/go-sql-driver/mysql"
@@ -32,8 +34,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/excel", procesarJSON).Methods(http.MethodPost)
 	r.HandleFunc("/inicio", Home)
-	r.HandleFunc("/send-emails", Email_Student)
-	r.HandleFunc("/send", Email_Student_E)
+	r.HandleFunc("/send_emails/{table}", Email_Student).Methods("POST")
 
 	corsHandler := cors.Default().Handler(r)
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -51,6 +52,43 @@ type Student struct {
 	Third_partial  int
 	Final_score    int
 	Email          string
+}
+
+func Home(w http.ResponseWriter, req *http.Request) {
+	// Database connection
+	established_connection := conectionBD()
+	records, err := established_connection.Query("SELECT * FROM students")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	student := Student{}
+	ArrayStudent := []Student{}
+
+	for records.Next() {
+		var id, account, first_partial, second_partial, third_partial, final_score int
+		var name, subject, email string
+		err = records.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
+		if err != nil {
+			panic(err.Error())
+		}
+		student.Id = id
+		student.Name = name
+		student.Account = account
+		student.Subject = subject
+		student.First_partial = first_partial
+		student.Second_partial = second_partial
+		student.Third_partial = third_partial
+		student.Final_score = final_score
+		student.Email = email
+
+		ArrayStudent = append(ArrayStudent, student)
+
+	}
+	// Convert the array to JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ArrayStudent)
 }
 
 // Process JSON from excel sent from frontend
@@ -104,42 +142,136 @@ func save_in_BD(data []map[string]interface{}) error {
 	return nil
 }
 
-func Home(w http.ResponseWriter, req *http.Request) {
-	// Database connection
+// Funcion para enviiar correos desde la base de datos, extrae los datos de la tabla estudiante
+func Email_Student(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	table := vars["table"]
+
+	// Parsear el cuerpo de la solicitud JSON
+	var data map[string]string
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Establecer conexión a la base de datos
 	established_connection := conectionBD()
-	records, err := established_connection.Query("SELECT * FROM students")
+	var rows *sql.Rows
+
+	// Seleccionar la tabla y campos correctos según la información proporcionada
+	if table == "students" {
+		rows, err = established_connection.Query("SELECT * FROM students")
+	} else if table == "students_excel" {
+		rows, err = established_connection.Query("SELECT * FROM students_excel ")
+	} else {
+		http.Error(w, "Invalid table name", http.StatusBadRequest)
+		return
+	}
 
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, "Error querying the database", http.StatusInternalServerError)
+		return
 	}
 
-	student := Student{}
-	ArrayStudent := []Student{}
-
-	for records.Next() {
-		var id, account, first_partial, second_partial, third_partial, final_score int
-		var name, subject, email string
-		err = records.Scan(&id, &name, &account, &subject, &first_partial, &second_partial, &third_partial, &final_score, &email)
+	for rows.Next() {
+		var person Student
+		err := rows.Scan(&person.Id, &person.Name, &person.Account, &person.Subject, &person.First_partial, &person.Second_partial, &person.Third_partial, &person.Final_score, &person.Email)
 		if err != nil {
-			panic(err.Error())
+			log.Printf("Failed to scan registry: %v", err)
+			continue
 		}
-		student.Id = id
-		student.Name = name
-		student.Account = account
-		student.Subject = subject
-		student.First_partial = first_partial
-		student.Second_partial = second_partial
-		student.Third_partial = third_partial
-		student.Final_score = final_score
-		student.Email = email
+		subject := data["subject"]
+		professorName := data["professorName"]
+		c_name := data["c_name"]
+		c_subject := data["c_subject"]
+		desp := data["desp"]
 
-		ArrayStudent = append(ArrayStudent, student)
+		// Generar el contenido del correo con el contenido personalizado del usuario
+		htmlContent := generateEmailContent(person, data["customMessage"], professorName, c_name, c_subject, desp)
 
+		// Enviar el correo electrónico
+		err = sendEmail(person.Email, subject, htmlContent)
+		if err != nil {
+			log.Printf("Error sending mail to %s (%s): %v", person.Name, person.Email, err)
+		} else {
+			log.Printf("send email to %s (%s)", person.Name, person.Email)
+		}
 	}
-	// Convert the array to JSON
+
+	// Enviar respuesta exitosa al frontend
+	response := map[string]string{"message": "Emails sent successfully"}
+	jsonResponse, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ArrayStudent)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+
 }
+
+func generateEmailContent(student Student, customContent, professorName, c_name, c_subject, desp string) string {
+	P1 := strconv.Itoa(student.First_partial)
+	P2 := strconv.Itoa(student.Second_partial)
+	P3 := strconv.Itoa(student.Third_partial)
+	Final_score := strconv.Itoa(student.Final_score)
+
+	// Reemplazar los marcadores de posición en la plantilla HTML.
+	htmlContent := strings.Replace(templateHTML, "{{Nombre}}", student.Name, -1)
+	htmlContent = strings.Replace(htmlContent, "{{Asignatura}}", student.Subject, -1)
+	htmlContent = strings.Replace(htmlContent, "{{P1}}", P1, -1)
+	htmlContent = strings.Replace(htmlContent, "{{P2}}", P2, -1)
+	htmlContent = strings.Replace(htmlContent, "{{P3}}", P3, -1)
+	htmlContent = strings.Replace(htmlContent, "{{Final_score}}", Final_score, -1)
+	htmlContent = strings.Replace(htmlContent, "{{CustomContent}}", customContent, -1)
+	htmlContent = strings.Replace(htmlContent, "{{Profesor}}", professorName, -1)
+	htmlContent = strings.Replace(htmlContent, "{{c_name}}", c_name, -1)
+	htmlContent = strings.Replace(htmlContent, "{{c_subject}}", c_subject, -1)
+	htmlContent = strings.Replace(htmlContent, "{{desp}}", desp, -1)
+
+	return htmlContent
+}
+
+const templateHTML = `
+<!DOCTYPE html>
+<html>
+
+<body>
+    <div id="customMessage" style="border: 1px solid #ccc; padding: 10px;">
+        {{c_name}} {{Nombre}}
+        <br><br>
+        {{CustomContent}}
+        <br>
+		<br>
+        {{c_subject}} {{Asignatura}}
+        <br>
+		
+
+		<table border="1" cellpadding="5">
+        <thead >
+          <tr>
+            <th >Primer Parcial</th>
+            <th >Segundo Parcial</th>
+            <th >Tercer Parcial</th>
+            <th>Nota Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{P1}}</td>
+            <td>{{P2}}</td>
+            <td>{{P3}}</td>
+            <td>{{Final_score}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+	  <br>
+      {{desp}}
+	  <br>
+	  {{Profesor}}
+    </div>
+</body>
+</html>
+`
 
 func sendEmail(email, subject, body string) error {
 	// Configure sending emails
@@ -159,97 +291,4 @@ func sendEmail(email, subject, body string) error {
 	}
 
 	return nil
-}
-
-func Email_Student(w http.ResponseWriter, r *http.Request) {
-	established_connection := conectionBD()
-	rows, err := established_connection.Query("SELECT * FROM students") // we access the table students
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	for rows.Next() {
-		var student Student
-		err := rows.Scan(&student.Id, &student.Name, &student.Account, &student.Subject, &student.First_partial, &student.Second_partial, &student.Third_partial, &student.Final_score, &student.Email)
-		if err != nil {
-			log.Printf("Failed to scan registry: %v", err)
-			continue
-		}
-
-		htmlContent := generateEmailContent(student)
-
-		err = sendEmail(student.Email, "Calificaciones de la clase MM-520", htmlContent)
-		if err != nil {
-			log.Printf("Error sending mail to %s (%s): %v", student.Name, student.Email, err)
-		} else {
-			log.Printf("send email to %s (%s)", student.Name, student.Email)
-		}
-	}
-
-	fmt.Println("Mailing process completed")
-}
-
-// Access the table students_excel
-func Email_Student_E(w http.ResponseWriter, r *http.Request) {
-	established_connection := conectionBD()
-	rows, err := established_connection.Query("SELECT * FROM students_excel") //we access the table students_excel
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	for rows.Next() {
-		var student Student
-		err := rows.Scan(&student.Id, &student.Name, &student.Account, &student.Subject, &student.First_partial, &student.Second_partial, &student.Third_partial, &student.Final_score, &student.Email)
-		if err != nil {
-			log.Printf("Failed to scan registry: %v", err)
-			continue
-		}
-
-		htmlContent := generateEmailContent(student)
-
-		err = sendEmail(student.Email, "Calificaciones", htmlContent)
-		if err != nil {
-			log.Printf("Error sending mail to %s (%s): %v", student.Name, student.Email, err)
-		} else {
-			log.Printf("sen email to %s (%s)", student.Name, student.Email)
-		}
-	}
-
-	fmt.Println("Mailing process completed")
-
-}
-
-// Falta cambiar, esto lo debe editar el usuarios desde el frontend
-func generateEmailContent(student Student) string {
-
-	P1 := strconv.Itoa(student.First_partial)
-	P2 := strconv.Itoa(student.Second_partial)
-	P3 := strconv.Itoa(student.Third_partial)
-	Final_score := strconv.Itoa(student.Final_score)
-
-	htmlContent := `
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<title>Correo Electrónico Personalizado</title>
-	</head>
-	<body>
-		<h1>Hola, ` + student.Name + `</h1>
-		<p>A continuación se muestran sus datos y calificaciones obtenidas:</p>
-		<p>Nombre: ` + student.Name + `</p>
-		<p>Correo Electrónico: ` + student.Email + `</p>
-		<p>Asignatura: ` + student.Subject + `</p>
-		<p>Su nota del primer parcial es: ` + P1 + `</p>
-		<p>Su nota del segundo parcial es: ` + P2 + `</p>
-		<p>Su nota del tercer parcial es: ` + P3 + `</p>
-		<p>Su nota final es: ` + Final_score + `</p>
-		
-		<p>Saludos</p>
-	</body>
-	</html>
-	`
-
-	return htmlContent
 }

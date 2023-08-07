@@ -1,16 +1,54 @@
-# Sobre lo que trata mi proyecto
+# Sistema de Gestión de Calificaciones
 
-- Un profesor tiene una cuadro de calificaciones finales de sus estudiantes. El profesor desea enviar un mensaje de correo electronico personalizado a cada estudiante donde se detalle las calificaciones parciales y las calificaciones finales.
+Este proyecto es un sistema de envío de correos para estudiantes basado en Go, MySQL y Excel. Permite visualizar calificaciones almacenadas en una base de datos y Excel.
+
+## Funcionalidades
+- Visualizar calificaciones almacenadas en la base de datos.
+- Envío de correos electrónicos personalizados a estudiantes con información relevante sobre sus calificaciones.
+- Procesamiento de datos en formato JSON para su almacenamiento en una base de datos MySQL.
+- Uso de la librería `gomail` para enviar correos electrónicos desde una cuenta de Gmail.
+
+## Uso de Excel
+
+1. Abre `inicio.html` en el navegador web para acceder a la interfaz del sistema.
+2. Selecciona un archivo Excel y haz clic en "Enviar Archivo" para cargar las calificaciones.
+3. Utiliza la tabla para ver las calificaciones almacenadas en la base de datos.
+4. Llena el formulario de envío de correos para enviar notificaciones personalizadas a los estudiantes.
+
+## Tecnologia usada en el Frontend
+
+- HTML5
+- Bootstrap 4
+- XLSX.js (para manipular archivos Excel)
+- JavaScript
+## Requisitos en Go
+
+- Go (Golang)
+- MySQL
+- Librería `github.com/go-gomail/gomail`
+- Librería `github.com/gorilla/mux`
+- Librería `github.com/rs/cors`
+
+## Dependencias de Go
+- go get -u `github.com/go-gomail/gomail`
+- go get -u  `github.com/gorilla/mux`
+- go get -u `github.com/rs/cors`
 
 
-- En este caso, pues las calificaciones se tienen en una base de datos (mysql), para extraer dichas calificaciones desde el frontend usaremos como Backend Goland y este a la vez pedira los registros a mysql
+## Contenido en Go
 
-#### Debemos tener en cuenta lo siguiente:
+- `inicio.html`: Página principal que contiene la interfaz de usuario.
+- `convertidor.js`: Script que convierte los datos del archivo Excel en formato JSON.
+- `inicio.js`: Script que carga y muestra las calificaciones de la base de datos en la interfaz.
+- `send_email_excel.js`: Script que envía correos electrónicos personalizados a estudiantes con calificaciones de un archivo Excel y Mysql.
 
-1. Crear una lista de correos
-2. Componer el correo electrónico
-3. Personalizar el mensaje
-4. Enviar el correo electrónico
+
+
+## Créditos
+
+Este proyecto fue creado por Henrry Molina como parte de la clase Programacion Comercial. Puedes encontrar más detalles y contactarme en [mi perfil de GitHub](https://github.com/hmolinaa).
+
+
 
 ![](https://wallpaperaccess.com/full/1262277.jpg)
 
