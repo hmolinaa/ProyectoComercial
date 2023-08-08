@@ -4,6 +4,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -35,6 +36,7 @@ func main() {
 	r.HandleFunc("/excel", procesarJSON).Methods(http.MethodPost)
 	r.HandleFunc("/inicio", Home)
 	r.HandleFunc("/send_emails/{table}", Email_Student).Methods("POST")
+	r.HandleFunc("/send-emails", sendEmailsToStudents).Methods("POST")
 
 	corsHandler := cors.Default().Handler(r)
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -105,7 +107,7 @@ func procesarJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = save_in_BD(jsonData)
+	err = insertDataIntoTable(jsonData, "unah", "students_ex")
 	if err != nil {
 		http.Error(w, "Failed to save to database: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -117,6 +119,79 @@ func procesarJSON(w http.ResponseWriter, r *http.Request) {
 	// Send the JSON back to the frontend
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jsonData)
+}
+
+func insertDataIntoTable(data []map[string]interface{}, dbName string, tableName string) error {
+	// Conexión con la base de datos
+	db := conectionBD()
+	defer db.Close()
+
+	// Selecciona la base de datos
+	_, err := db.Exec("USE " + dbName)
+	if err != nil {
+		return err
+	}
+
+	// Elimina la tabla si existe
+	_, err = db.Exec("DROP TABLE IF EXISTS " + tableName)
+	if err != nil {
+		return err
+	}
+
+	// Infiera la estructura de la tabla a partir del primer elemento del JSON
+	firstItem := data[0]
+	createTableQuery := "CREATE TABLE IF NOT EXISTS " + tableName + " (id INT AUTO_INCREMENT PRIMARY KEY"
+
+	for key, value := range firstItem {
+		var dataType string
+
+		switch value.(type) {
+		case int, int64:
+			dataType = "INT"
+		default:
+			dataType = "VARCHAR(255)"
+		}
+
+		// Rodea los nombres de columna con comillas inversas para manejar caracteres especiales
+		createTableQuery += ", `" + key + "` " + dataType
+	}
+
+	createTableQuery += ")"
+
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		return err
+	}
+
+	// Inserta los datos en la tabla y imprime en la consola
+	for _, item := range data {
+		insertColumns := []string{}
+		insertValues := []interface{}{}
+
+		for key, value := range item {
+			insertColumns = append(insertColumns, key)
+			insertValues = append(insertValues, value)
+		}
+
+		// Construye la cadena de columnas
+		columnStr := "`" + strings.Join(insertColumns, "`, `") + "`"
+
+		// Construye la cadena de marcadores de posición (?)
+		valuePlaceholders := strings.Repeat("?, ", len(insertColumns)-1) + "?"
+
+		// Construye la consulta INSERT
+		insertQuery := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, columnStr, valuePlaceholders)
+
+		// Inserta los datos en la tabla
+		_, err := db.Exec(insertQuery, insertValues...)
+		if err != nil {
+			log.Println("Error al insertar en la base de datos:", err)
+		} else {
+			fmt.Println("Datos insertados:", insertValues) // Imprime los datos insertados en la consola
+		}
+	}
+
+	return nil
 }
 
 func save_in_BD(data []map[string]interface{}) error {
@@ -222,10 +297,6 @@ func generateEmailContent(student Student, customContent, professorName, c_name,
 	htmlContent = strings.Replace(htmlContent, "{{P3}}", P3, -1)
 	htmlContent = strings.Replace(htmlContent, "{{Final_score}}", Final_score, -1)
 	htmlContent = strings.Replace(htmlContent, "{{CustomContent}}", customContent, -1)
-	htmlContent = strings.Replace(htmlContent, "{{Profesor}}", professorName, -1)
-	htmlContent = strings.Replace(htmlContent, "{{c_name}}", c_name, -1)
-	htmlContent = strings.Replace(htmlContent, "{{c_subject}}", c_subject, -1)
-	htmlContent = strings.Replace(htmlContent, "{{desp}}", desp, -1)
 
 	return htmlContent
 }
@@ -236,7 +307,7 @@ const templateHTML = `
 
 <body>
     <div id="customMessage" style="border: 1px solid #ccc; padding: 10px;">
-        {{c_name}} {{Nombre}}
+         {{Nombre}}
         <br><br>
         {{CustomContent}}
         <br>
@@ -291,4 +362,81 @@ func sendEmail(email, subject, body string) error {
 	}
 
 	return nil
+}
+
+func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Obtener la plantilla del correo electrónico desde la solicitud POST
+	emailTemplate := r.PostFormValue("emailTemplate")
+
+	// Establecer una función para obtener los datos de los estudiantes desde la base de datos
+	// En este ejemplo, se asume que tienes una función getStudentsData() que obtiene los datos de los estudiantes desde la base de datos
+	studentsData, err := getStudentsData("students")
+	if err != nil {
+		http.Error(w, "Error al obtener los datos de los estudiantes", http.StatusInternalServerError)
+		return
+	}
+
+	// Establecer una función para enviar correos electrónicos aquí
+	// La función sendEmail() podría ser parte de una biblioteca de envío de correos electrónicos o una API de envío de correos electrónicos
+
+	// Supongamos que tienes una función sendEmail() que puede enviar correos electrónicos
+	// Puedes llamar a esta función para enviar los correos electrónicos a los estudiantes
+	// Por ejemplo, podrías recorrer los datos de los estudiantes y enviar correos electrónicos uno por uno con el mensaje personalizado
+
+	for _, student := range studentsData {
+		// Reemplazar los marcadores de la plantilla con los valores de los estudiantes
+		personalizedContent := strings.Replace(emailTemplate, "{{Nombre}}", student.Name, -1)
+		personalizedContent = strings.Replace(personalizedContent, "{{P1}}", strconv.Itoa(student.First_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "{{P2}}", strconv.Itoa(student.Second_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "{{P3}}", strconv.Itoa(student.Third_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "{{Final_score}}", strconv.Itoa(student.Final_score), -1)
+		personalizedContent = strings.Replace(personalizedContent, "{{Asignatura}}", student.Subject, -1)
+
+		htmlContent := personalizedContent
+		err := sendEmail(student.Email, "Calificaciones de la clase MM-520", htmlContent)
+		if err != nil {
+			log.Printf("Error sending mail to %s (%s): %v", student.Name, student.Email, err)
+		} else {
+			log.Printf("send email to %s (%s)", student.Name, student.Email)
+		}
+	}
+
+	// Enviar una respuesta al frontend para indicar que los correos electrónicos se enviaron correctamente
+	w.Write([]byte("Correos electrónicos enviados correctamente"))
+}
+
+func getStudentsData(table string) ([]Student, error) {
+	established_connection := conectionBD()
+	var query string
+
+	if table == "students" {
+		query = "SELECT * FROM students"
+	} else if table == "students_excel" {
+		query = "SELECT * FROM students_excel"
+	} else {
+		return nil, errors.New("Invalid table name")
+	}
+
+	rows, err := established_connection.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var students []Student
+	for rows.Next() {
+		var student Student
+		err := rows.Scan(&student.Id, &student.Name, &student.Account, &student.Subject, &student.First_partial, &student.Second_partial, &student.Third_partial, &student.Final_score, &student.Email)
+		if err != nil {
+			return nil, err
+		}
+		students = append(students, student)
+	}
+
+	return students, nil
 }

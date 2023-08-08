@@ -3,7 +3,7 @@ const contentDiv = document.getElementById('contentDiv');
 
 // Función para mostrar el contenido del div
 function mostrarContenidoDiv() {
-  contentDiv.style.display = 'block';
+    contentDiv.style.display = 'block';
 }
 
 async function enviarArchivo() {
@@ -39,6 +39,17 @@ async function enviarArchivo() {
                     const data = await response.json();
                     mostrarTabla(data);
                     mostrarContenidoDiv();
+                    // Obtén una referencia al contenedor de la tabla
+                    const tablaContainer = document.getElementById('tabla-container');
+
+                    // Crea el elemento de tabla
+                    const tabla = document.createElement('table');
+                    tabla.id = 'items';
+
+                    // Inserta la tabla dentro del contenedor
+                    tablaContainer.appendChild(tabla);
+
+                    mostrarContenidoDiv();
                 } else {
                     console.log('Error en la solicitud Fetch:', response.status, response.statusText);
                 }
@@ -70,25 +81,40 @@ async function procesarArchivoExcel(fileContent) {
     });
 }
 
+
 function mostrarTabla(data) {
     const tableBody = document.querySelector('#items tbody');
+    const tableHeader = document.querySelector('#items thead');
 
     // Limpiar la tabla antes de agregar nuevos datos
     tableBody.innerHTML = '';
+    tableHeader.innerHTML = '';
+
+    if (data.length === 0) {
+        return; // No hay datos para mostrar
+    }
+
+    // Obtener los nombres de columna del primer elemento del JSON
+    const columnNames = Object.keys(data[0]);
+
+    // Crear la fila de encabezado de la tabla
+    const headerRow = document.createElement('tr');
+    columnNames.forEach(columnName => {
+        const th = document.createElement('th');
+        th.textContent = columnName;
+        headerRow.appendChild(th);
+    });
+    tableHeader.appendChild(headerRow);
 
     // Iterar sobre los datos y agregar filas a la tabla
-    data.forEach((item) => {
+    data.forEach(item => {
         const row = document.createElement('tr');
-        row.innerHTML = `
-    <td>${item.Nombre}</td>
-    <td>${item.Cuenta}</td>
-    <td>${item['Asignatura']}</td>
-    <td>${item['Parcial 1']}</td>
-    <td>${item['Parcial 2']}</td>
-    <td>${item['Parcial 3']}</td>
-    <td>${item['Nota Final']}</td>
-    <td>${item.Correo}</td>
-     `;
+        columnNames.forEach(columnName => {
+            const td = document.createElement('td');
+            td.textContent = item[columnName];
+            row.appendChild(td);
+        });
         tableBody.appendChild(row);
     });
 }
+

@@ -23,17 +23,13 @@
       <li class="nav-item">
         <a class="nav-item nav-link active" href="inicio.html"> Inicio</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-item nav-link " href="subirExcel.html">Subir Excel <span class="sr-only">(current)</span></a>
+      </li>
     </ul>
   </nav>
 
   <div class="container" style="margin-top:30px">
-
-    <h5 class="text-primary"> Subir archivo Excel </h5>
-    <input type="file" id="fileInput">
-    <button onclick="enviarArchivo()">Enviar Archivo</button>
-    <br />
-    <br />
-
     <h5 class="text-primary"> Vista de calificaciones de cada estudiante (Base de Datos) </h5>
     <br />
 
@@ -59,155 +55,39 @@
     <div class="container">
       <div class="row justify-content-start">
         <div class="col-md-8 border   text-info p-4">
-          <h5 class="text-secondary text-center">Esquema del correo </h5>
+
           <!-- Formulario para enviar correos a estudiantes (Base de datos) -->
           <form id="studentBD">
-
             <label for="subject">Asunto:</label>
             <input type="text" id="subject" class="form-control w-50" placeholder="Ingrese el asunto del correo"
               required>
             <br>
-            <label for="subject">Cuerpo del correo:</label><br><br>
-            <div class="d-flex align-items-center">
-              <input type="text" id="c_name" class="form-control w-25" placeholder="Estimado" required>
-              <label for="c_name"> {{Nombre}}</label>
-            </div>
-            <br>
-            <label for="customMessage">Mensaje Personalizado:</label><br>
-            <textarea id="customMessage" class="form-control" rows="2" cols="50"></textarea>
-            <br>
-            <br>
-            <div class="d-flex align-items-center">
-              <input type="text" id="c_subject" class="form-control w-75 me-2"
-                placeholder="Le informamos que sus calificaciones para la asignatura" required>
-              <label for="c_subject"> {{Asignatura}}</label>
-            </div>
-            <br>
-            <table border="1" cellpadding="5">
-              <thead>
-                <tr>
-                  <th>Primer Parcial</th>
-                  <th>Segundo Parcial</th>
-                  <th>Tercer Parcial</th>
-                  <th>Nota Final</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{P1}}</td>
-                  <td>{{P2}}</td>
-                  <td>{{P3}}</td>
-                  <td>{{Final_score}}</td>
-                </tr>
-              </tbody>
-            </table>
-            <br>
-            <input type="text" id="desp" class="form-control" placeholder="Despedida" required>
-            <label for="desp"> </label>
+
+            <label for="emailTemplate">Plantilla del Correo:</label><br>
+            <textarea id="emailTemplate" class="form-control" rows="8" cols="70" required></textarea>
+  
             <br>
 
-            <input type="text" id="professorName" class="form-control w-25" placeholder="Nombre del profesor" required>
-            <label for="professorName"> </label>
-            <br>
-            <br>
-            <input type="submit" class="btn btn-dark" value="Enviar Correos">
+            <input id="sendEmails" type="submit" class="btn btn-dark" value="Enviar Correos">
+            <!button id="sendEmails" type="button">Enviar Correos Electrónicos
           </form>
+
         </div>
       </div>
     </div>
 
-    <br>
-    <br>
 
-    <div id="contentDiv" style="display: none;">
-      <h5 class=" text-secondary"> Vista de calificaciones de cada estudiante (Excel) </h5>
-      <table id="items" class="table table-hover table-bordered" WIDTH="100%" ">
-        <br />
-        <thead>
-          <tr class=" table-warning">
-        <th>Nombre</th>
-        <th>Cuenta</th>
-        <th>Asignatura</th>
-        <th>Parcial 1</th>
-        <th>Parcial 2</th>
-        <th>Parcial 3</th>
-        <th>Nota Final</th>
-        <th>Correo</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="container">
-        <div class="row justify-content-start">
-          <div class="col-md-8 border   text-info p-4">
-            <h5 class="text-secondary text-center">Esquema del correo </h5>
-            <!-- Formulario para enviar correos a estudiantes (Excel) -->
-            <form id="studentEx">
-
-              <label for="subject1">Asunto:</label>
-              <input type="text" id="subject1" class="form-control w-50" placeholder="Ingrese el asunto del correo"
-                required>
-              <br>
-              <label for="subject1">Cuerpo del correo:</label><br><br>
-              <div class="d-flex align-items-center">
-                <input type="text" id="c_name1" class="form-control w-25" placeholder="Estimado" required>
-                <label for="c_name1"> {{Nombre}}</label>
-              </div>
-              <br>
-              <label for="customMessage1">Mensaje Personalizado:</label><br>
-              <textarea id="customMessage1" class="form-control" rows="2" cols="50"></textarea>
-              <br>
-              <br>
-              <div class="d-flex align-items-center">
-                <input type="text" id="c_subject1" class="form-control w-75 me-2"
-                  placeholder="Le informamos que sus calificaciones para la asignatura" required>
-                <label for="c_subject1"> {{Asignatura}}</label>
-              </div>
-              <br>
-              <table border="1" cellpadding="5">
-                <thead>
-                  <tr>
-                    <th>Primer Parcial</th>
-                    <th>Segundo Parcial</th>
-                    <th>Tercer Parcial</th>
-                    <th>Nota Final</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{{P1}}</td>
-                    <td>{{P2}}</td>
-                    <td>{{P3}}</td>
-                    <td>{{Final_score}}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <br>
-              <input type="text" id="desp1" class="form-control" placeholder="Despedida" required>
-              <label for="desp1"> </label>
-              <br>
-
-              <input type="text" id="professorName1" class="form-control w-25" placeholder="Nombre del profesor"
-                required>
-              <label for="professorName1"> </label>
-              <br>
-              <br>
-              <input type="submit" class="btn btn-primary" value="Enviar Correos">
-            </form>
-          </div>
-        </div>
-      </div>
-
-
-    </div>
+    
+    
 
     <br>
     <br />
   </div>
   <br />
   <script src="convertidor.js"></script>
+  <script src="senemailprueba.js"></script>
   <script src="inicio.js"></script>
-  <script src="send_email_excel.js"></script>
+  <"!script src="send_email_excel.js">
 </body>
 
 <footer class="bg-dark text-center text-white" style="margin-bottom:0">
@@ -240,10 +120,6 @@
   </div>
   <!-- Copyright -->
 </footer>
-
-
-
-
 
 
 </html>

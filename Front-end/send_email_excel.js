@@ -4,12 +4,9 @@ document.getElementById('studentBD').addEventListener('submit', function(event) 
     // Obtener los valores de los campos del formulario
     const subject = document.getElementById('subject').value;
     const customMessage = document.getElementById('customMessage').value;
-    const professorName = document.getElementById('professorName').value;
-    const c_name = document.getElementById('c_name').value;
-    const c_subject = document.getElementById('c_subject').value;
-    const desp = document.getElementById('desp').value;
+
     // Llamar a la función sendEmails con el endpoint 
-    sendEmails('http://localhost:8080/send_emails/students', subject, customMessage, professorName, c_name, c_subject, desp);
+    sendEmails('http://localhost:8080/send_emails/students', subject, customMessage);
 });
 
 // Escuchador de evento para el formulario 'studentEx'
