@@ -256,17 +256,12 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to scan registry: %v", err)
 			continue
 		}
-		subject := data["subject"]
-		professorName := data["professorName"]
-		c_name := data["c_name"]
-		c_subject := data["c_subject"]
-		desp := data["desp"]
+		//subject := data["subject"]
 
 		// Generar el contenido del correo con el contenido personalizado del usuario
-		htmlContent := generateEmailContent(person, data["customMessage"], professorName, c_name, c_subject, desp)
 
 		// Enviar el correo electrónico
-		err = sendEmail(person.Email, subject, htmlContent)
+		//err = sendEmail()
 		if err != nil {
 			log.Printf("Error sending mail to %s (%s): %v", person.Name, person.Email, err)
 		} else {
@@ -282,67 +277,6 @@ func Email_Student(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 
 }
-
-func generateEmailContent(student Student, customContent, professorName, c_name, c_subject, desp string) string {
-	P1 := strconv.Itoa(student.First_partial)
-	P2 := strconv.Itoa(student.Second_partial)
-	P3 := strconv.Itoa(student.Third_partial)
-	Final_score := strconv.Itoa(student.Final_score)
-
-	// Reemplazar los marcadores de posición en la plantilla HTML.
-	htmlContent := strings.Replace(templateHTML, "{{Nombre}}", student.Name, -1)
-	htmlContent = strings.Replace(htmlContent, "{{Asignatura}}", student.Subject, -1)
-	htmlContent = strings.Replace(htmlContent, "{{P1}}", P1, -1)
-	htmlContent = strings.Replace(htmlContent, "{{P2}}", P2, -1)
-	htmlContent = strings.Replace(htmlContent, "{{P3}}", P3, -1)
-	htmlContent = strings.Replace(htmlContent, "{{Final_score}}", Final_score, -1)
-	htmlContent = strings.Replace(htmlContent, "{{CustomContent}}", customContent, -1)
-
-	return htmlContent
-}
-
-const templateHTML = `
-<!DOCTYPE html>
-<html>
-
-<body>
-    <div id="customMessage" style="border: 1px solid #ccc; padding: 10px;">
-         {{Nombre}}
-        <br><br>
-        {{CustomContent}}
-        <br>
-		<br>
-        {{c_subject}} {{Asignatura}}
-        <br>
-		
-
-		<table border="1" cellpadding="5">
-        <thead >
-          <tr>
-            <th >Primer Parcial</th>
-            <th >Segundo Parcial</th>
-            <th >Tercer Parcial</th>
-            <th>Nota Final</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{P1}}</td>
-            <td>{{P2}}</td>
-            <td>{{P3}}</td>
-            <td>{{Final_score}}</td>
-          </tr>
-        </tbody>
-      </table>
-
-	  <br>
-      {{desp}}
-	  <br>
-	  {{Profesor}}
-    </div>
-</body>
-</html>
-`
 
 func sendEmail(email, subject, body string) error {
 	// Configure sending emails
@@ -374,28 +308,22 @@ func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
 	emailTemplate := r.PostFormValue("emailTemplate")
 
 	// Establecer una función para obtener los datos de los estudiantes desde la base de datos
-	// En este ejemplo, se asume que tienes una función getStudentsData() que obtiene los datos de los estudiantes desde la base de datos
 	studentsData, err := getStudentsData("students")
 	if err != nil {
 		http.Error(w, "Error al obtener los datos de los estudiantes", http.StatusInternalServerError)
 		return
 	}
 
-	// Establecer una función para enviar correos electrónicos aquí
-	// La función sendEmail() podría ser parte de una biblioteca de envío de correos electrónicos o una API de envío de correos electrónicos
-
-	// Supongamos que tienes una función sendEmail() que puede enviar correos electrónicos
-	// Puedes llamar a esta función para enviar los correos electrónicos a los estudiantes
-	// Por ejemplo, podrías recorrer los datos de los estudiantes y enviar correos electrónicos uno por uno con el mensaje personalizado
-
 	for _, student := range studentsData {
 		// Reemplazar los marcadores de la plantilla con los valores de los estudiantes
-		personalizedContent := strings.Replace(emailTemplate, "{{Nombre}}", student.Name, -1)
-		personalizedContent = strings.Replace(personalizedContent, "{{P1}}", strconv.Itoa(student.First_partial), -1)
-		personalizedContent = strings.Replace(personalizedContent, "{{P2}}", strconv.Itoa(student.Second_partial), -1)
-		personalizedContent = strings.Replace(personalizedContent, "{{P3}}", strconv.Itoa(student.Third_partial), -1)
-		personalizedContent = strings.Replace(personalizedContent, "{{Final_score}}", strconv.Itoa(student.Final_score), -1)
-		personalizedContent = strings.Replace(personalizedContent, "{{Asignatura}}", student.Subject, -1)
+		personalizedContent := strings.Replace(emailTemplate, "<<Nombre>>", student.Name, -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Parcial1>>}}", strconv.Itoa(student.First_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Parcial2>>", strconv.Itoa(student.Second_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Parcial3>>", strconv.Itoa(student.Third_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Nota Final>>", strconv.Itoa(student.Final_score), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Asignatura>>", student.Subject, -1)
+
+		personalizedContent = strings.Replace(personalizedContent, "\n", "<br>", -1)
 
 		htmlContent := personalizedContent
 		err := sendEmail(student.Email, "Calificaciones de la clase MM-520", htmlContent)
