@@ -1,59 +1,41 @@
-// Escuchador de evento para el formulario 'studentBD'
-document.getElementById('studentBD').addEventListener('submit', function(event) {
+document.getElementById("studentEx").addEventListener("submit", function (event) {
     event.preventDefault();
-    // Obtener los valores de los campos del formulario
-    const subject = document.getElementById('subject').value;
-    const customMessage = document.getElementById('customMessage').value;
-
-    // Llamar a la función sendEmails con el endpoint 
-    sendEmails('http://localhost:8080/send_emails/students', subject, customMessage);
+    sendEmails();
 });
 
-// Escuchador de evento para el formulario 'studentEx'
-document.getElementById('studentEx').addEventListener('submit', function(event) {
-    event.preventDefault();
-    // Obtener los valores de los campos del formulario
-    const subject = document.getElementById('subject1').value;
-    const customMessage = document.getElementById('customMessage1').value;
-    const professorName = document.getElementById('professorName1').value;
-    const c_name = document.getElementById('c_name1').value;
-    const c_subject = document.getElementById('c_subject1').value;
-    const desp = document.getElementById('desp1').value;
-    // Llamar a la función sendEmails con el endpoint 
-    sendEmails('http://localhost:8080/send_emails/students_excel', subject, customMessage, professorName, c_name, c_subject, desp);
-});
+function sendEmails() {
+    const email = document.getElementById("email").value;
+    const subject1 = document.getElementById("subject1").value;
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("subject1", subject1);
 
-// Función para enviar correos electrónicos
-function sendEmails(endpoint, subject, customMessage, professorName, c_name, c_subject, desp) {
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        // Convertir los datos del formulario en una cadena JSON y enviarlos como cuerpo de la solicitud
-        body: JSON.stringify({
-            subject: subject,
-            customMessage: customMessage,
-            professorName: professorName,
-            c_name: c_name,
-            c_subject: c_subject,
-            desp: desp
-        })
+    fetch("http://localhost:8080/send-emails_ex", {
+        method: "POST",
+        body: formData,
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error("Error al enviar correos");
         }
-        // Analizar la respuesta JSON del servidor y mostrar un mensaje de alerta
-        return response.json();
+        return response.text();
     })
     .then(data => {
-        alert(data.message);
+        console.log(data);
+        showSuccessAlert();
     })
     .catch(error => {
-        console.error('Error sending emails:', error);
-        alert('Error sending emails. Please try again.');
+        console.error("Error: ", error);
+        showErrorAlert();
     });
+}
+
+function showSuccessAlert() {
+    window.alert("Correos enviados correctamente");
+}
+
+function showErrorAlert() {
+    window.alert("Error al enviar correos");
 }
 
 

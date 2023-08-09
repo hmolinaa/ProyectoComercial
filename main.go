@@ -35,8 +35,8 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/excel", procesarJSON).Methods(http.MethodPost)
 	r.HandleFunc("/inicio", Home)
-	r.HandleFunc("/send_emails/{table}", Email_Student).Methods("POST")
 	r.HandleFunc("/send-emails", sendEmailsToStudents).Methods("POST")
+	r.HandleFunc("/send-emails_ex", sendEmailsToStudentExcel).Methods("POST")
 
 	corsHandler := cors.Default().Handler(r)
 	fmt.Println("Servidor en ejecución en http://localhost:8080")
@@ -194,89 +194,7 @@ func insertDataIntoTable(data []map[string]interface{}, dbName string, tableName
 	return nil
 }
 
-func save_in_BD(data []map[string]interface{}) error {
-	// Database connection
-	db := conectionBD()
-	defer db.Close()
-
-	// Clear the table "students_excel"
-	_, err := db.Exec("DELETE FROM students_excel")
-	if err != nil {
-		log.Println("Error cleaning table students_excel:", err)
-		return err
-	}
-
-	// Insert the data in the table "students_excel"
-	for _, item := range data {
-		_, err := db.Exec("INSERT INTO students_excel (name, account, subject, first_partial, second_partial, third_partial, final_score, email) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)",
-			item["Nombre"], item["Cuenta"], item["Asignatura"], item["Parcial 1"], item["Parcial 2"], item["Parcial 3"], item["Nota Final"], item["Correo"])
-		if err != nil {
-			log.Println("Error inserting into database:", err)
-		}
-	}
-	return nil
-}
-
 // Funcion para enviiar correos desde la base de datos, extrae los datos de la tabla estudiante
-func Email_Student(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	table := vars["table"]
-
-	// Parsear el cuerpo de la solicitud JSON
-	var data map[string]string
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Establecer conexión a la base de datos
-	established_connection := conectionBD()
-	var rows *sql.Rows
-
-	// Seleccionar la tabla y campos correctos según la información proporcionada
-	if table == "students" {
-		rows, err = established_connection.Query("SELECT * FROM students")
-	} else if table == "students_excel" {
-		rows, err = established_connection.Query("SELECT * FROM students_excel ")
-	} else {
-		http.Error(w, "Invalid table name", http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		http.Error(w, "Error querying the database", http.StatusInternalServerError)
-		return
-	}
-
-	for rows.Next() {
-		var person Student
-		err := rows.Scan(&person.Id, &person.Name, &person.Account, &person.Subject, &person.First_partial, &person.Second_partial, &person.Third_partial, &person.Final_score, &person.Email)
-		if err != nil {
-			log.Printf("Failed to scan registry: %v", err)
-			continue
-		}
-		//subject := data["subject"]
-
-		// Generar el contenido del correo con el contenido personalizado del usuario
-
-		// Enviar el correo electrónico
-		//err = sendEmail()
-		if err != nil {
-			log.Printf("Error sending mail to %s (%s): %v", person.Name, person.Email, err)
-		} else {
-			log.Printf("send email to %s (%s)", person.Name, person.Email)
-		}
-	}
-
-	// Enviar respuesta exitosa al frontend
-	response := map[string]string{"message": "Emails sent successfully"}
-	jsonResponse, _ := json.Marshal(response)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
-
-}
 
 func sendEmail(email, subject, body string) error {
 	// Configure sending emails
@@ -298,6 +216,7 @@ func sendEmail(email, subject, body string) error {
 	return nil
 }
 
+// Enviar correos en base a la base de datos, tabla students
 func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -306,6 +225,7 @@ func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
 
 	// Obtener la plantilla del correo electrónico desde la solicitud POST
 	emailTemplate := r.PostFormValue("emailTemplate")
+	subject := r.PostFormValue("subject") // Obtener el asunto del correo
 
 	// Establecer una función para obtener los datos de los estudiantes desde la base de datos
 	studentsData, err := getStudentsData("students")
@@ -322,11 +242,10 @@ func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
 		personalizedContent = strings.Replace(personalizedContent, "<<Parcial3>>", strconv.Itoa(student.Third_partial), -1)
 		personalizedContent = strings.Replace(personalizedContent, "<<Nota Final>>", strconv.Itoa(student.Final_score), -1)
 		personalizedContent = strings.Replace(personalizedContent, "<<Asignatura>>", student.Subject, -1)
-
 		personalizedContent = strings.Replace(personalizedContent, "\n", "<br>", -1)
 
 		htmlContent := personalizedContent
-		err := sendEmail(student.Email, "Calificaciones de la clase MM-520", htmlContent)
+		err := sendEmail(student.Email, subject, htmlContent)
 		if err != nil {
 			log.Printf("Error sending mail to %s (%s): %v", student.Name, student.Email, err)
 		} else {
@@ -338,14 +257,15 @@ func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Correos electrónicos enviados correctamente"))
 }
 
+// Función para obtener los datos de los estudiantes desde la base de datos
 func getStudentsData(table string) ([]Student, error) {
 	established_connection := conectionBD()
 	var query string
 
 	if table == "students" {
 		query = "SELECT * FROM students"
-	} else if table == "students_excel" {
-		query = "SELECT * FROM students_excel"
+	} else if table == "students_ex" {
+		query = "SELECT * FROM students_ex"
 	} else {
 		return nil, errors.New("Invalid table name")
 	}
@@ -367,4 +287,173 @@ func getStudentsData(table string) ([]Student, error) {
 	}
 
 	return students, nil
+}
+
+func printTableData_ex(table string) {
+	established_connection := conectionBD()
+	var query string
+
+	query = "SELECT * FROM " + table
+
+	rows, err := established_connection.Query(query)
+	if err != nil {
+		log.Printf("Error al obtener los datos de la tabla: %v", err)
+		return
+	}
+	defer rows.Close()
+
+	columnNames, err := rows.Columns()
+	if err != nil {
+		log.Printf("Error al obtener los nombres de las columnas: %v", err)
+		return
+	}
+
+	var data []map[string]interface{}
+	for rows.Next() {
+		values := make([]interface{}, len(columnNames))
+		valuePtrs := make([]interface{}, len(columnNames))
+		for i := range columnNames {
+			valuePtrs[i] = &values[i]
+		}
+
+		err := rows.Scan(valuePtrs...)
+		if err != nil {
+			log.Printf("Error al escanear los valores: %v", err)
+			return
+		}
+
+		entry := make(map[string]interface{})
+		for i, col := range columnNames {
+			val := values[i]
+			entry[col] = val
+		}
+		data = append(data, entry)
+	}
+
+	// Iterar a través de los datos y mostrarlos en la consola
+	for i, row := range data {
+		log.Printf("Fila %d:", i+1)
+		for colName, value := range row {
+			log.Printf("%s: %s", colName, string(value.([]byte)))
+		}
+	}
+}
+
+// Función para obtener y enviar correos electrónicos basados en los datos de una tabla desconocida
+func sendEmailsToStudents_ex(email string, subject1 string) error {
+	established_connection := conectionBD()
+
+	rows, err := established_connection.Query("SELECT * FROM students_ex")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	columnNames, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	var data []map[string]interface{}
+	for rows.Next() {
+		values := make([]interface{}, len(columnNames))
+		valuePtrs := make([]interface{}, len(columnNames))
+		for i := range columnNames {
+			valuePtrs[i] = &values[i]
+		}
+
+		err := rows.Scan(valuePtrs...)
+		if err != nil {
+			return err
+		}
+
+		entry := make(map[string]interface{})
+		for i, col := range columnNames {
+			val := values[i]
+			entry[col] = val
+		}
+		data = append(data, entry)
+	}
+
+	// Iterar a través de los datos y enviar correos electrónicos
+	for _, row := range data {
+
+		for colName, value := range row {
+			// Convertir valor de bytes a cadena de texto
+			valueStr := ""
+			if byteValue, ok := value.([]byte); ok {
+				valueStr = string(byteValue)
+			}
+			log.Printf("%s: %s", colName, valueStr)
+		}
+
+		// Reemplazar marcadores en la plantilla de correo con los valores de la fila
+		personalizedContent := email
+		for colName, value := range row {
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+			personalizedContent = strings.Replace(personalizedContent, "\n", "<br>", -1)
+
+		}
+		personalizedContent = strings.Replace(personalizedContent, "\n", "<br>", -1)
+
+		htmlContent := personalizedContent
+		for colName, value := range row {
+			subject1 = strings.Replace(subject1, "<<"+colName+">>", fmt.Sprintf("%s", value), -1)
+		}
+
+		emailValueBytes, ok := row["Correo"].([]byte)
+		if !ok {
+			log.Printf("Tipo de dato no válido en columna Correo: %T", row["Correo"])
+			continue
+		}
+
+		emailValue := string(emailValueBytes)
+		if emailValue == "" {
+			log.Printf("Valor de email vacío en fila")
+			continue
+		}
+
+		err := sendEmail(emailValue, subject1, htmlContent)
+		if err != nil {
+			log.Printf("Error al enviar correo a %s: %v", emailValue, err)
+		} else {
+			log.Printf("Correo enviado a %s", emailValue)
+		}
+
+	}
+
+	return nil
+}
+
+func sendEmailsToStudentExcel(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Obtener la plantilla del correo electrónico y el asunto desde la solicitud POST
+	email := r.PostFormValue("email")
+	subject1 := r.PostFormValue("subject1")
+
+	// Enviar correos electrónicos basados en los datos de la tabla "students_ex"
+	err := sendEmailsToStudents_ex(email, subject1)
+	if err != nil {
+		http.Error(w, "Error al enviar correos electrónicos: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Enviar una respuesta al frontend para indicar que los correos electrónicos se enviaron correctamente
+	w.Write([]byte("Correos electrónicos enviados correctamente"))
 }

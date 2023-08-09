@@ -6,8 +6,10 @@ document.getElementById("sendEmails").addEventListener("click", function (event)
 
   function sendEmails() {
     const emailTemplate = document.getElementById("emailTemplate").value;
+    const subject = document.getElementById("subject").value;
     const formData = new FormData();
     formData.append("emailTemplate", emailTemplate);
+    formData.append("subject", subject);
 
     fetch("http://localhost:8080/send-emails", {
       method: "POST",

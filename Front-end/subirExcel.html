@@ -40,54 +40,39 @@
         <div id="contentDiv" style="display: none;">
             <h5 class=" text-secondary"> Vista de calificaciones de cada estudiante (Excel) </h5>
             <div id="tabla-container">
-                <!-- La tabla se mostrará aquí -->
+                <table id="items" class="table table-hover table-bordered" WIDTH="100%">
+                    <thead class=" table-warning">
+
+                        <!-- La tabla se mostrará aquí -->
+
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+
             </div>
 
 
             <div class="container">
                 <div class="row justify-content-start">
-                    <div class="col-md-8 border   text-info p-4">
-                        <h5 class="text-secondary text-center">Esquema del correo </h5>
-                        <!-- Formulario para enviar correos a estudiantes (Excel) -->
-                        <form id="studentEx">
-
-                            <label for="subject1">Asunto:</label>
-                            <input type="text" id="subject1" class="form-control w-50"
-                                placeholder="Ingrese el asunto del correo" required>
-                            <br>
-                            <label for="subject1">Cuerpo del correo:</label><br><br>
-                            <div class="d-flex align-items-center">
-                                <input type="text" id="c_name1" class="form-control w-25" placeholder="Estimado"
-                                    required>
-                                <label for="c_name1"> {{Nombre}}</label>
-                            </div>
-                            <br>
-                            <label for="customMessage1">Mensaje Personalizado:</label><br>
-                            <textarea id="customMessage1" class="form-control" rows="2" cols="50"></textarea>
-                            <br>
-                            <br>
-                            <div class="d-flex align-items-center">
-                                <input type="text" id="c_subject1" class="form-control w-75 me-2"
-                                    placeholder="Le informamos que sus calificaciones para la asignatura" required>
-                                <label for="c_subject1"> {{Asignatura}}</label>
-                            </div>
-                            <br>
-
-                            <br>
-                            <input type="text" id="desp1" class="form-control" placeholder="Despedida" required>
-                            <label for="desp1"> </label>
-                            <br>
-
-                            <input type="text" id="professorName1" class="form-control w-25"
-                                placeholder="Nombre del profesor" required>
-                            <label for="professorName1"> </label>
-                            <br>
-                            <br>
-                            <input type="submit" class="btn btn-primary" value="Enviar Correos">
-                        </form>
-                    </div>
+                  <div class="col-md-8 border   text-info p-4">
+          
+                    <!-- Formulario para enviar correos a estudiantes (Base de datos) -->
+                    <form id="studentEx">
+                      <label for="subject1">Asunto:</label>
+                      <input type="text" id="subject1" class="form-control w-50" placeholder="Ingrese el asunto del correo"
+                        required>
+                      <br>
+          
+                      <label for="email">Plantilla del Correo:</label><br>
+                      <textarea id="email" class="form-control" rows="8" cols="70" required></textarea>
+                      <br>
+                      <input id="sendEmail" type="submit" class="btn btn-primary" value="Enviar Correos">
+                    
+                    </form>
+          
+                  </div>
                 </div>
-            </div>
 
 
         </div>
@@ -97,7 +82,6 @@
     </div>
     <br />
     <script src="convertidor.js"></script>
-    <script src="inicio.js"></script>
     <script src="send_email_excel.js"></script>
 </body>
 
