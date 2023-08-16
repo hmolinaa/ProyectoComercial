@@ -4,9 +4,13 @@ document.getElementById("studentEx").addEventListener("submit", function (event)
 });
 
 function sendEmails() {
+    const Femail1 = document.getElementById("Femail1").value
+    const password1 = document.getElementById("password1").value
     const email = document.getElementById("email").value;
     const subject1 = document.getElementById("subject1").value;
     const formData = new FormData();
+    formData.append("Femail1",Femail1)
+    formData.append("password1",password1)
     formData.append("email", email);
     formData.append("subject1", subject1);
 

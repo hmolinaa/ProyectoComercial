@@ -55,34 +55,56 @@
 
             <div class="container">
                 <div class="row justify-content-start">
-                  <div class="col-md-8 border   text-info p-4">
-          
-                    <!-- Formulario para enviar correos a estudiantes (Base de datos) -->
-                    <form id="studentEx">
-                      <label for="subject1">Asunto:</label>
-                      <input type="text" id="subject1" class="form-control w-50" placeholder="Ingrese el asunto del correo"
-                        required>
-                      <br>
-          
-                      <label for="email">Plantilla del Correo:</label><br>
-                      <textarea id="email" class="form-control" rows="8" cols="70" required></textarea>
-                      <br>
-                      <input id="sendEmail" type="submit" class="btn btn-primary" value="Enviar Correos">
-                    
-                    </form>
-          
-                  </div>
+                    <div class="col-md-8 border   text-info p-4">
+
+                        <!-- Formulario para enviar correos a estudiantes (Excel) -->
+                        <form id="studentEx">
+                            <div class="form-group">
+                                <label for="Femail1">Correo del profesor:</label>
+                                <input type="text" class="form-control" id="Femail1"
+                                    placeholder="Ingrese su correo@unah.hn" name="Femail" required>
+                                <div class="valid-feedback">Valid.</div>
+                                <div class="invalid-feedback">Please fill out this field.</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="password1">Contraseña:</label>
+                                <input type="password" class="form-control" id="password1"
+                                    placeholder="Ingrese su contraseña" name="pswd" required>
+                                <div class="valid-feedback">Valid.</div>
+                                <div class="invalid-feedback">Please fill out this field.</div>
+                            </div>
+                            <div class="form-group form-check">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" type="checkbox" name="remember" required> Validar.
+                                    <div class="valid-feedback">Valid.</div>
+                                    <div class="invalid-feedback">Check this checkbox to continue.</div>
+                                </label>
+                            </div>
+                            <label for="subject1">Asunto:</label>
+                            <input type="text" id="subject1" class="form-control w-50"
+                                placeholder="Ingrese el asunto del correo" required>
+                            <br>
+
+                            <label for="email">Plantilla del Correo:</label><br>
+                            <textarea id="email" class="form-control" rows="10" cols="70" required></textarea>
+                            <br>
+                            <input id="sendEmail" type="submit" class="btn btn-primary" value="Enviar Correos">
+
+                        </form>
+
+                    </div>
                 </div>
 
 
-        </div>
+            </div>
 
-        <br>
+            <br>
+            <br />
+        </div>
         <br />
     </div>
-    <br />
-    <script src="convertidor.js"></script>
-    <script src="send_email_excel.js"></script>
+        <script src="convertidorExcel.js"></script>
+        <script src="send_email_excel.js"></script>
 </body>
 
 <footer class="bg-dark text-center text-white" style="margin-bottom:0">

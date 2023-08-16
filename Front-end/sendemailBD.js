@@ -5,9 +5,13 @@ document.getElementById("sendEmails").addEventListener("click", function (event)
   });
 
   function sendEmails() {
+    const Femail = document.getElementById("Femail").value
+    const password = document.getElementById("password").value
     const emailTemplate = document.getElementById("emailTemplate").value;
     const subject = document.getElementById("subject").value;
     const formData = new FormData();
+    formData.append("Femail",Femail)
+    formData.append("password",password)
     formData.append("emailTemplate", emailTemplate);
     formData.append("subject", subject);
 
