@@ -219,9 +219,9 @@ func sendEmailsToStudents(w http.ResponseWriter, r *http.Request) {
 	for _, student := range studentsData {
 		// Replace template markers with student values
 		personalizedContent := strings.Replace(emailTemplate, "<<Nombre>>", student.Name, -1)
-		personalizedContent = strings.Replace(personalizedContent, "<<Parcial1>>}}", strconv.Itoa(student.First_partial), -1)
-		personalizedContent = strings.Replace(personalizedContent, "<<Parcial2>>", strconv.Itoa(student.Second_partial), -1)
-		personalizedContent = strings.Replace(personalizedContent, "<<Parcial3>>", strconv.Itoa(student.Third_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Parcial-1>>}}", strconv.Itoa(student.First_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Parcial-2>>", strconv.Itoa(student.Second_partial), -1)
+		personalizedContent = strings.Replace(personalizedContent, "<<Parcial-3>>", strconv.Itoa(student.Third_partial), -1)
 		personalizedContent = strings.Replace(personalizedContent, "<<Nota Final>>", strconv.Itoa(student.Final_score), -1)
 		personalizedContent = strings.Replace(personalizedContent, "<<Asignatura>>", student.Subject, -1)
 		personalizedContent = strings.Replace(personalizedContent, "\n", "<br>", -1)
